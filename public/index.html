@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Seraphina API</title>
+    <link rel="preload" as="image" href="./estilo/assets/Imagem.png" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Unbounded:wght@700&family=Poppins:wght@300;400;600&display=swap"
+      rel="stylesheet"
+    />
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+        scroll-behavior: smooth;
+      }
+
+      body {
+        font-family: "Poppins", sans-serif;
+        background-color: #0e0e0e;
+        color: #f0f0f0;
+      }
+
+     #loader {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: #0e0e0e;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  gap: 1.5rem;
+}
+
+.spinner {
+  width: 60px;
+  height: 60px;
+  border: 6px solid #ff66c46b;
+  border-top: 6px solid #ff66c4;
+  border-radius: 50%;
+  animation: spin 1.2s linear infinite, horizontalNoise 0.15s infinite;
+  box-shadow: 0 0 20px #ff66c4;
+}
+
+@keyframes horizontalNoise {
+  0%, 100% {
+    transform: translateX(0);
+  }
+  25% {
+    transform: translateX(-1.5px);
+  }
+  50% {
+    transform: translateX(1.5px);
+  }
+  75% {
+    transform: translateX(-1.5px);
+  }
+}
+
+.loader-text {
+  font-size: 1.4rem;
+  color: #ff66c4;
+  animation: pulse 1.6s infinite;
+  font-family: 'Inter', sans-serif;
+  letter-spacing: 1px;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+@keyframes pulse {
+  0% { opacity: 0.5; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.05); }
+  100% { opacity: 0.5; transform: scale(1); }
+}
+
+
+      .toast {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        background: #333;
+        color: #fff;
+        padding: 1rem 1.5rem;
+        border-radius: 8px;
+        box-shadow: 0 0 10px rgba(255, 105, 180, 0.4);
+        display: none;
+        z-index: 10000;
+      }
+
+      .hero {
+        position: relative;
+        min-height: 100vh;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        text-align: center;
+        overflow: hidden;
+      }
+
+      .hero::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: linear-gradient(to top, rgba(14, 14, 14, 0.85), rgba(26, 26, 26, 0.85));
+        z-index: 1;
+      }
+
+      .hero img.bg-img {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        z-index: 0;
+      }
+
+      .hero-content {
+        z-index: 2;
+        padding: 2rem;
+        animation: fadeInUp 1.5s ease-out forwards;
+        opacity: 1;
+      }
+
+      .hero h1 {
+        font-family: "Unbounded", sans-serif;
+        font-size: 4rem;
+        background: linear-gradient(to right, #fff, #ff66c4);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        margin-bottom: 1rem;
+      }
+
+      .hero p {
+        font-size: 1.2rem;
+        color: #ddd;
+        margin-bottom: 2rem;
+        max-width: 700px;
+        margin-inline: auto;
+      }
+
+      .btn {
+        padding: 0.9rem 2.2rem;
+        font-size: 1.1rem;
+        background: #ff1f8f;
+        color: white;
+        border: none;
+        border-radius: 50px;
+        cursor: pointer;
+        box-shadow: 0 0 15px rgba(255, 31, 236, 0.4);
+        transition: all 0.3s ease;
+        animation: pulse 2s infinite;
+      }
+
+      .btn:hover {
+        transform: scale(1.05);
+        box-shadow: 0 0 30px rgba(255, 31, 188, 0.6);
+      }
+
+      .user-area {
+        padding: 5rem 2rem 3rem;
+        background: #181818;
+        text-align: center;
+      }
+
+      .user-area h2 {
+        font-family: "Unbounded", sans-serif;
+        font-size: 2.8rem;
+        margin-bottom: 2rem;
+        background: linear-gradient(to right, #ff66c4, #ff1f8f);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+      }
+
+      .options-grid {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 1.5rem;
+      }
+
+      .option-btn {
+        padding: 1.2rem 2.5rem;
+        font-size: 1.1rem;
+        border: none;
+        border-radius: 30px;
+        color: white;
+        background: linear-gradient(135deg, #ff66c4, #ff1f8f);
+        box-shadow: 0 0 15px rgba(255, 105, 180, 0.3);
+        cursor: pointer;
+        transition: all 0.3s ease;
+      }
+
+      .option-btn:hover {
+        transform: translateY(-3px) scale(1.05);
+        box-shadow: 0 0 25px rgba(255, 105, 180, 0.5);
+      }
+
+      .status-area {
+        margin-top: 4rem;
+        padding: 2rem;
+        background: #202020;
+        border-radius: 14px;
+        max-width: 1000px;
+        margin-inline: auto;
+        box-shadow: 0 0 20px rgba(255, 31, 143, 0.15);
+      }
+
+      .status-area h3 {
+        font-size: 2rem;
+        margin-bottom: 1.5rem;
+        text-align: center;
+        background: linear-gradient(to right, #fff, #ffb4f3);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+      }
+
+      .status-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 1.5rem;
+      }
+
+      .status-card {
+        background: #2a2a2a;
+        padding: 1rem 1.5rem;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        gap: 0.8rem;
+        animation: fadeInUp 1s ease forwards;
+      }
+
+      .status-icon {
+        font-size: 1.8rem;
+        color: #ff66c4;
+      }
+
+      .status-content h4 {
+        font-size: 1rem;
+        color: #ddd;
+      }
+
+      .status-content p {
+        font-size: 0.95rem;
+        color: #aaa;
+      }
+
+      footer {
+        text-align: center;
+        padding: 2rem;
+        background-color: #111;
+        color: #888;
+        font-size: 0.9rem;
+      }
+
+      @keyframes fadeInUp {
+        from {
+          opacity: 0;
+          transform: translateY(30px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      @media (max-width: 768px) {
+        .hero h1 {
+          font-size: 2.5rem;
+        }
+
+        .user-area h2 {
+          font-size: 2rem;
+        }
+
+        .status-grid {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+
+  <body>
+    <div id="loader">
+  <div class="spinner"></div>
+  <span class="loader-text">Carregando...</span>
+</div>
+
+<div class="toast" id="toast">Aguarde um momento...</div>
+
+
+    <section class="hero">
+      <img src="./estilo/assets/Imagem.png" alt="Fundo Hero" class="bg-img" />
+      <div class="hero-content" data-aos="zoom-in">
+        <h1>Bem vindo à <br />Seraphina API</h1>
+        <p>Controle total do seu bot. Inteligência. Estabilidade. Desempenho de verdade.</p>
+        <button class="btn" onclick="document.getElementById('user-area').scrollIntoView({ behavior: 'smooth' });">
+          Explorar Agora
+        </button>
+      </div>
+    </section>
+
+    <section id="user-area" class="user-area">
+      <h2 data-aos="fade-up">O que você deseja fazer?</h2>
+      <div class="options-grid">
+        <button class="option-btn">Adquirir Acesso ao Bot</button>
+        <button class="option-btn" id="keyUser">Pegar sua Key</button>
+        <button class="option-btn" id="statusApi">Olhar o status da API</button>
+        <button class="option-btn" id="AreaAdmin">Area admin</button>
+      </div>
+
+      <div id="status" class="status-area">
+        <h3>Status do Sistema</h3>
+      <!--Colocar infomações reais!-->
+        <div class="status-grid">
+          <div class="status-card" data-aos="fade-up"><i class="ph ph-plug status-icon"></i><div class="status-content"><h4>Bot Online</h4><p>✅ Funcionando sem interrupções</p></div></div>
+          <div class="status-card" data-aos="fade-up"><i class="ph ph-database status-icon"></i><div class="status-content"><h4>Banco de Dados</h4><p>✅ Conectado</p></div></div>
+          <div class="status-card" data-aos="fade-up"><i class="ph ph-server status-icon"></i><div class="status-content"><h4>Servidor</h4><p>✅ Estável</p></div></div>
+          <div class="status-card" data-aos="fade-up"><i class="ph ph-clock-clockwise status-icon"></i><div class="status-content"><h4>Tempo de Resposta</h4><p>📡 Média: 120ms</p></div></div>
+          <div class="status-card" data-aos="fade-up"><i class="ph ph-shield-check status-icon"></i><div class="status-content"><h4>Segurança</h4><p>🔒 Proteção ativa contra abusos e spam</p></div></div>
+          <div class="status-card" data-aos="fade-up"><i class="ph ph-user-focus status-icon"></i><div class="status-content"><h4>Usuários Ativos</h4><p>👥 +2.300 usando atualmente</p></div></div>
+          <div class="status-card" data-aos="fade-up"><i class="ph ph-arrow-clockwise status-icon"></i><div class="status-content"><h4>Última Atualização</h4><p>📅 06/06/2025 às 14:22</p></div></div>
+          <div class="status-card" data-aos="fade-up"><i class="ph ph-star status-icon"></i><div class="status-content"><h4>Avaliação</h4><p>⭐ Excelente desempenho</p></div></div>
+        </div>
+      </div>
+    </section>
+
+    <footer>© 2025 Seraphina API. Todos os direitos reservados.</footer>
+
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+    <script>
+      AOS.init();
+
+      window.addEventListener("load", () => {
+    const loader = document.getElementById("loader");
+    loader.style.opacity = "0";
+    setTimeout(() => loader.style.display = "none", 720);
+  });
+
+      document.getElementById('keyUser').addEventListener('click', () => {
+        const toast = document.getElementById('toast');
+        toast.style.display = 'block';
+        setTimeout(() => {
+          toast.style.display = 'none';
+          window.location.href = 'User.html';
+        }, 2000);
+      });
+       document.getElementById('statusApi').addEventListener('click', () => {
+        const toast = document.getElementById('toast');
+        toast.style.display = 'block';
+        setTimeout(() => {
+          toast.style.display = 'none';
+          window.location.href = 'status_api.html';
+        }, 2000);
+      });
+       document.getElementById('AreaAdmin').addEventListener('click', () => {
+        const toast = document.getElementById('toast');
+        toast.style.display = 'block';
+        setTimeout(() => {
+          toast.style.display = 'none';
+          window.location.href = 'admin.html';
+        }, 2000);
+      });
+      
+    </script>
+  </body>
+</html>
