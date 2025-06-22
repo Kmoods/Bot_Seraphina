@@ -516,8 +516,6 @@ async function salvar() {
     return;
   }
 
-  
-
   try {
     // Verifica na API se o número já existe
     const res = await fetch(`https://apiseraphina.onrender.com/api/verificar-usuario?numero=${encodeURIComponent(numero)}`);
@@ -552,7 +550,6 @@ async function salvar() {
     alert("Erro ao verificar número.");
   }
 }
-
 
     // Limpa o número para apenas dígitos
     const numeroWhatsApp = numero.replace(/\D/g, "");

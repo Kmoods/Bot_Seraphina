@@ -866,6 +866,8 @@ router.put("/api/alterar-plano", (req, res) => {
   let usuarios = carregarUsuarios();
   const usuario = usuarios.find((u) => u.numero === chave);
 
+
+  
   if (!usuario) {
     return res.status(404).json({ message: "Usuário não encontrado." });
   }
