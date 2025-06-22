@@ -507,21 +507,52 @@ h1 {
   }
 
   // Função para salvar os dados do usuário e solicitar código para planos pagos
-  async function salvar() {
-    const numero = document.getElementById("numero").value.trim();
-    const chave = document.getElementById("chave").value.trim();
+async function salvar() {
+  const numero = document.getElementById("numero").value.trim();
+  const chave = document.getElementById("chave").value.trim();
 
-    if (!numero || !chave || !planoSelecionado) {
-      alert("Preencha todos os campos e selecione um plano.");
+  if (!numero || !chave || !planoSelecionado) {
+    alert("Preencha todos os campos e selecione um plano.");
+    return;
+  }
+
+  
+
+  try {
+    // Verifica na API se o número já existe
+    const res = await fetch(`https://apiseraphina.onrender.com/api/verificar-usuario?numero=${encodeURIComponent(numero)}`);
+    const data = await res.json();
+
+    if (data.existe) {
+      alert("Este número já foi cadastrado anteriormente.");
       return;
     }
 
-    // Verifica se já existe um token salvo (usuário já salvo anteriormente)
-    let tokenExistente = localStorage.getItem("user_token");
-    if (tokenExistente) {
-      alert("Você já salvou suas informações anteriormente.");
-      return;
+    // Aqui continua o processo normal de salvar
+    // Ex: fazer POST com o número, chave e planoSelecionado
+    const salvarRes = await fetch("https://apiseraphina.onrender.com/api/salvar-usuario", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({ numero, chave, plano: planoSelecionado })
+    });
+
+    const salvarData = await salvarRes.json();
+
+    if (salvarRes.ok) {
+      localStorage.setItem("user_token", salvarData.token || "true"); // ou use algo mais robusto
+      alert("Informações salvas com sucesso.");
+    } else {
+       alert("Você já salvou suas informações anteriormente.");
     }
+
+  } catch (err) {
+    console.error(err);
+    alert("Erro ao verificar número.");
+  }
+}
+
 
     // Limpa o número para apenas dígitos
     const numeroWhatsApp = numero.replace(/\D/g, "");
@@ -573,7 +604,7 @@ h1 {
       console.error("Erro no fetch save-user:", err);
       alert("Erro ao salvar usuário.");
     }
-  }
+    
 
   // Carrega os dados do usuário pelo token e preenche o formulário e área de info
   async function carregarDadosUsuario(token) {

@@ -807,6 +807,16 @@ router.delete("/api/deletar-usuario", (req, res) => {
   res.json({ message: "Usuário deletado com sucesso." });
 });
 
+router.get("/api/verificar-usuario", (req, res) => {
+  const { numero } = req.query;
+  const usuarios = carregarUsuarios();
+
+  const existe = usuarios.some((u) => u.numero === numero);
+
+  res.json({ existe });
+});
+
+
 // PUT - Edita usuário (atualiza plano)
 router.put("/api/editar-usuario", (req, res) => {
   const { numero, plano } = req.body;
