@@ -787,10 +787,16 @@ router.get("/api/usuarios", (req, res) => {
   res.json(usuarios);
 });
 
+
 // DELETE - Remove usuário por chave
 router.delete("/api/deletar-usuario", (req, res) => {
   const { chave } = req.query;
-  let usuarios = carregarUsuarios();
+
+  if (!chave) {
+    return res.status(400).json({ message: "Chave do usuário não fornecida." });
+  }
+
+  const usuarios = carregarUsuarios();
   const novosUsuarios = usuarios.filter((u) => u.chave !== chave);
 
   if (novosUsuarios.length === usuarios.length) {
