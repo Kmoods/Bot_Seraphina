@@ -18,13 +18,7 @@
   --radius: 18px;
   --shadow: 0 0 40px rgba(255, 77, 157, 0.2);
 }
-
-* {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-}
-
+* { box-sizing: border-box; margin: 0; padding: 0; }
 body {
   font-family: 'Inter', sans-serif;
   background: linear-gradient(145deg, #0d0d0d, #191919);
@@ -32,15 +26,10 @@ body {
   padding: 3rem 1rem;
   min-height: 100vh;
   display: flex;
-  justify-content: center;
-  align-items: flex-start;
-  transition: all 0.3s ease;
-   display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 2rem;
+  flex-direction: column;
+  align-items: center;
+  gap: 2rem;
 }
-
 .container {
   width: 100%;
   max-width: 850px;
@@ -52,8 +41,6 @@ body {
   border: 1px solid var(--border);
   margin: 1rem auto;
 }
-
-/* HEADER */
 h2 {
   text-align: center;
   font-family: 'Unbounded', cursive;
@@ -63,14 +50,7 @@ h2 {
   -webkit-text-fill-color: transparent;
   margin-bottom: 2rem;
 }
-
-/* FORMULÁRIO */
-label {
-  margin-top: 1rem;
-  font-weight: 500;
-  display: block;
-}
-
+label { margin-top: 1rem; font-weight: 500; display: block; }
 input {
   width: 100%;
   margin-top: 0.5rem;
@@ -81,12 +61,7 @@ input {
   color: var(--text);
   font-size: 1rem;
 }
-
-input:focus {
-  outline: none;
-  border-color: var(--accent);
-}
-
+input:focus { outline: none; border-color: var(--accent); }
 .btn {
   width: 100%;
   margin-top: 1.5rem;
@@ -100,12 +75,10 @@ input:focus {
   transition: all 0.3s ease;
   box-shadow: 0 4px 20px rgba(255, 77, 157, 0.3);
 }
-
 .btn:hover {
   transform: scale(1.03);
   box-shadow: 0 6px 25px rgba(255, 77, 157, 0.5);
 }
-
 .plans-list {
   display: flex;
   justify-content: space-between;
@@ -113,7 +86,6 @@ input:focus {
   margin-top: 1rem;
   gap: 1rem;
 }
-
 .plan-card {
   flex: 1 1 calc(33% - 1rem);
   background: rgba(255, 255, 255, 0.03);
@@ -125,22 +97,12 @@ input:focus {
   transition: all 0.3s ease;
   user-select: none;
 }
-
 .plan-card.selected {
   border-color: var(--accent);
   box-shadow: 0 0 15px rgba(255, 77, 157, 0.3);
 }
-
-.plan-card img {
-  width: 60px;
-  margin-bottom: 0.8rem;
-}
-
-.plan-card h4 {
-  color: var(--accent);
-  font-size: 1.1rem;
-}
-
+.plan-card img { width: 60px; margin-bottom: 0.8rem; }
+.plan-card h4 { color: var(--accent); font-size: 1.1rem; }
 .plan-price {
   color: #fff;
   font-weight: 700;
@@ -148,7 +110,6 @@ input:focus {
   margin-top: 0.2rem;
   opacity: 0.7;
 }
-
 .output-box {
   background: rgba(255, 255, 255, 0.07);
   border-radius: var(--radius);
@@ -159,8 +120,6 @@ input:focus {
   font-size: 1.1rem;
   word-wrap: break-word;
 }
-
-/* ÁREA INFORMATIVA */
 .info-box {
   background: rgba(255, 255, 255, 0.06);
   border: 1px solid var(--accent);
@@ -170,7 +129,6 @@ input:focus {
   box-shadow: 0 0 20px rgba(255, 77, 157, 0.15);
   color: var(--text);
 }
-
 .info-item {
   display: flex;
   align-items: center;
@@ -178,276 +136,153 @@ input:focus {
   font-size: 1.05rem;
   margin-bottom: 1.2rem;
 }
-
 .info-item i {
   color: var(--accent);
   font-size: 1.2rem;
   min-width: 20px;
 }
-
 .icone-chave {
   animation: pulse 1.5s infinite;
   font-size: 1.2rem;
   margin-left: 0.4rem;
   transition: opacity 1.2s ease;
 }
-
-.icone-chave.visivel {
-  opacity: 1;
-}
-
-/*Fim do estilo*/
-@media (min-width: 769px) {
-  .burger {
-    display: none;
-  }
-}
-
+.icone-chave.visivel { opacity: 1; }
+@media (min-width: 769px) { .burger { display: none; } }
 @media (max-width: 400px) {
-  input, .btn {
-    font-size: 0.9rem;
-    padding: 0.7rem 0.8rem;
-  }
+  input, .btn { font-size: 0.9rem; padding: 0.7rem 0.8rem; }
 }
-
-/* ANIMAÇÃO CHAVE */
 @keyframes pulse {
   0% { transform: scale(1); }
   50% { transform: scale(1.1); }
   100% { transform: scale(1); }
 }
-
- /* Estilo para a área de requests */
-  /* Área de Requests melhorada */
-    .request-container {
-      max-width: 900px;
-      width: 100%;
-      background: var(--glass);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 2rem;
-      box-shadow: var(--shadow);
-    }
-
-    .request-container h2 {
-      font-family: 'Unbounded', cursive;
-      font-size: 2.4rem;
-      text-align: center;
-      margin-bottom: 2rem;
-      background: linear-gradient(to right, var(--accent), #ff85b3);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-    }
-
-    .info-box {
-      background: rgba(255, 255, 255, 0.07);
-      padding: 2rem;
-      border-radius: var(--radius);
-      border: 1px solid var(--accent);
-    }
-
-    #requests-area {
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: center;
-      gap: 1.5rem;
-    }
-
-    .info-item {
-      background: rgba(255, 255, 255, 0.08);
-      border-radius: var(--radius);
-      border: 1px solid rgba(255, 77, 157, 0.25);
-      padding: 1.5rem;
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-      transition: transform 0.3s ease, box-shadow 0.3s ease;
-      width: 100%;
-      max-width: 400px;
-      cursor: pointer;
-    }
-
-    .info-item:hover {
-      transform: translateY(-5px);
-      box-shadow: 0 6px 25px rgba(255, 77, 157, 0.2);
-    }
-
-    .info-item h3 {
-      color: var(--accent);
-      font-size: 1.5rem;
-      margin-bottom: 0.5rem;
-      text-align: center;
-    }
-
-    .info-item p {
-      color: var(--text);
-      font-size: 1rem;
-      flex-grow: 1;
-      margin: 1rem 0;
-      text-align: center;
-    }
-
-    /* Modal Styles */
-   /* CSS para o modal */
 h1 {
-      font-family: 'Unbounded', cursive;
-      color: #ff4d9d;
-      font-size: 2.8rem;
-      text-align: center;
-      margin-bottom: 3rem;
-      text-shadow: 0 0 10px rgba(255, 77, 157, 0.3);
-    }
-    .request-section {
-      margin-bottom: 3rem;
-      padding: 2rem;
-      border: 1px solid #ff4d9d;
-      border-radius: 16px;
-      background: rgba(255, 255, 255, 0.05);
-      box-shadow: 0 0 15px rgba(255, 77, 157, 0.1);
-      transition: transform 0.3s ease;
-    }
-    .request-section:hover {
-      transform: translateY(-5px);
-    }
-    .request-section h2 {
-      font-family: 'Unbounded', cursive;
-      font-size: 1.8rem;
-      color: #ff4d9d;
-      margin-bottom: 1rem;
-    }
-    .request-section p {
-      font-size: 1rem;
-      margin-bottom: 1rem;
-      color: #e0e0e0;
-    }
-    .request-buttons {
-      display: flex;
-      gap: 1rem;
-      flex-wrap: wrap;
-    }
-    .request-buttons button {
-      padding: 0.75rem 1.5rem;
-      background: linear-gradient(135deg, #ff4d9d, #bd2d7d);
-      border: none;
-      color: white;
-      font-weight: bold;
-      border-radius: 10px;
-      cursor: pointer;
-      flex: 1;
-      transition: background 0.3s;
-    }
-    .request-buttons button:hover {
-      background: #bd2d7d;
-    }
-    #modal {
-      display: none;
-      position: fixed;
-      z-index: 1000;
-      left: 0; top: 0;
-      width: 100%; height: 100%;
-      background-color: rgba(0, 0, 0, 0.7);
-      justify-content: center;
-      align-items: center;
-    }
-    #modal.show {
-      display: flex;
-    }
-    #modal-content {
-      background: #1a1a1a;
-      padding: 2rem;
-      border-radius: 16px;
-      width: 90%;
-      max-width: 700px;
-      box-shadow: 0 0 30px #ff4d9d;
-      color: #fff;
-      position: relative;
-    }
-    #modal-content h2 {
-      font-family: 'Unbounded', cursive;
-      margin-bottom: 1rem;
-    }
-    #code-display {
-      background: #111;
-      padding: 1rem;
-      border-radius: 10px;
-      margin-top: 1rem;
-      white-space: pre-wrap;
-      word-break: break-word;
-      max-height: 300px;
-      overflow-y: auto;
-      border: 1px solid #ff4d9d;
-    }
-
-
-    @media (max-width: 768px) {
-      #requests-area {
-        flex-direction: column;
-        align-items: center;
-      }
-    }
+  font-family: 'Unbounded', cursive;
+  color: #ff4d9d;
+  font-size: 2.8rem;
+  text-align: center;
+  margin-bottom: 3rem;
+  text-shadow: 0 0 10px rgba(255, 77, 157, 0.3);
+}
+.request-section {
+  margin-bottom: 3rem;
+  padding: 2rem;
+  border: 1px solid #ff4d9d;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.05);
+  box-shadow: 0 0 15px rgba(255, 77, 157, 0.1);
+  transition: transform 0.3s ease;
+}
+.request-section:hover { transform: translateY(-5px); }
+.request-section h2 {
+  font-family: 'Unbounded', cursive;
+  font-size: 1.8rem;
+  color: #ff4d9d;
+  margin-bottom: 1rem;
+}
+.request-section p { font-size: 1rem; margin-bottom: 1rem; color: #e0e0e0; }
+.request-buttons {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+.request-buttons button {
+  padding: 0.75rem 1.5rem;
+  background: linear-gradient(135deg, #ff4d9d, #bd2d7d);
+  border: none;
+  color: white;
+  font-weight: bold;
+  border-radius: 10px;
+  cursor: pointer;
+  flex: 1;
+  transition: background 0.3s;
+}
+.request-buttons button:hover { background: #bd2d7d; }
+#modal {
+  display: none;
+  position: fixed;
+  z-index: 1000;
+  left: 0; top: 0;
+  width: 100%; height: 100%;
+  background-color: rgba(0, 0, 0, 0.7);
+  justify-content: center;
+  align-items: center;
+}
+#modal.show { display: flex; }
+#modal-content {
+  background: #1a1a1a;
+  padding: 2rem;
+  border-radius: 16px;
+  width: 90%;
+  max-width: 700px;
+  box-shadow: 0 0 30px #ff4d9d;
+  color: #fff;
+  position: relative;
+}
+#modal-content h2 {
+  font-family: 'Unbounded', cursive;
+  margin-bottom: 1rem;
+}
+#code-display {
+  background: #111;
+  padding: 1rem;
+  border-radius: 10px;
+  margin-top: 1rem;
+  white-space: pre-wrap;
+  word-break: break-word;
+  max-height: 300px;
+  overflow-y: auto;
+  border: 1px solid #ff4d9d;
+}
+@media (max-width: 768px) {
+  #requests-area { flex-direction: column; align-items: center; }
+}
   </style>
 </head>
-
 <body>
-
-  <!-- Sidebar -->
-
  <div class="container">
     <h2>Área do Usuário</h2>
-
-    <form onsubmit="salvar(); return false;">
+    <form id="userForm" autocomplete="off">
       <label for="numero">WhatsApp:</label>
       <input type="tel" id="numero" placeholder="55 99 99999-9999" required />
-
       <label for="chave">Chave de Acesso:</label>
-<div style="display: flex; gap: 0.5rem; align-items: center;">
-  <input type="text" id="chave" readonly placeholder="Clique abaixo para gerar uma chave" style="flex: 1;" />
-  
-  <button type="button" onclick="copiarChave()" class="btn" style="padding: 0.8rem 1rem; width: auto; display: flex; align-items: center;">
-    Copiar
-    <span id="icone-chave" class="icone-chave"><i class="material-symbols-outlined">key_vertical</i></span>
-  </button>
-</div>
-<button type="button" class="btn" onclick="gerarChave()" id="btGera">Gerar Chave</button>
-
-      
-      <label>Escolha um plano:</label>
+      <div style="display: flex; gap: 0.5rem; align-items: center;">
+        <input type="text" id="chave" readonly placeholder="Clique abaixo para gerar uma chave" style="flex: 1;" />
+      </div>
+      <button type="button" class="btn" id="btnCopiarChave" style="padding: 0.8rem 1rem; width: auto; display: flex; align-items: center;">
+        Copiar
+        <span id="icone-chave" class="icone-chave"><i class="material-symbols-outlined">key_vertical</i></span>
+      </button>
+      <button type="button" class="btn" id="btGera">Gerar Chave</button>
       <div class="plans-list">
-        <div class="plan-card" data-plano="gratuito" onclick="selecionarPlano(this)">
+        <div class="plan-card" data-plano="gratuito">
           <img src="./estilo/assets/Image1.png" alt="Gratuito" />
           <h4>Gratuito</h4>
           <div class="plan-price">R$ 0,00</div>
         </div>
-        <div class="plan-card" data-plano="plus" onclick="selecionarPlano(this)">
+        <div class="plan-card" data-plano="plus">
           <img src="./estilo/assets/Image2.png" alt="Plus" />
           <h4>Plus</h4>
           <div class="plan-price">R$ 15,00</div>
         </div>
-        <div class="plan-card" data-plano="premium" onclick="selecionarPlano(this)">
+        <div class="plan-card" data-plano="premium">
           <img src="./estilo/assets/Image3.png" alt="Premium" />
           <h4>Premium</h4>
           <div class="plan-price">R$ 30,00</div>
         </div>
       </div>
-
       <button type="submit" class="btn">Salvar Dados</button>
     </form>
-
-    <!-- Área para mostrar informações do usuário -->
-    <!-- Nova área com visual moderno -->
-<div id="infoUsuario" class="info-box" style="display: none;">
-  <div class="info-item"><i class="fas fa-phone"></i><strong>Número:</strong><span id="infoNumero"></span></div>
-  <div class="info-item"><i class="fas fa-key"></i><strong>Chave de Acesso:</strong><span id="infoChave"></span></div>
-  <div class="info-item"><i class="fas fa-box"></i><strong>Plano Atual:</strong><span id="planoAtual"></span></div>
-  <div class="info-item"><i class="fas fa-chart-line"></i><strong>Limite de Requests:</strong><span id="limiteRequest"></span></div>
-  <div class="info-item"><i class="fas fa-check-circle"></i><strong>Requests Usadas:</strong><span id="requestsRestantes"></span></div>
-</div>
-
+    <div id="infoUsuario" class="info-box" style="display: none;">
+      <div class="info-item"><i class="fas fa-phone"></i><strong>Número:</strong><span id="infoNumero"></span></div>
+      <div class="info-item"><i class="fas fa-key"></i><strong>Chave de Acesso:</strong><span id="infoChave"></span></div>
+      <div class="info-item"><i class="fas fa-box"></i><strong>Plano Atual:</strong><span id="planoAtual"></span></div>
+      <div class="info-item"><i class="fas fa-chart-line"></i><strong>Limite de Requests:</strong><span id="limiteRequest"></span></div>
+      <div class="info-item"><i class="fas fa-check-circle"></i><strong>Requests Usadas:</strong><span id="requestsRestantes"></span></div>
+    </div>
   </div>
-
-
- <!-- Modal -->
-<h1>Área de Requisições</h1>
+  <h1>Área de Requisições</h1>
   <div id="requests-area"></div>
   <div id="modal">
     <div id="modal-content">
@@ -460,114 +295,61 @@ h1 {
       <pre id="code-display">Carregando...</pre>
     </div>
   </div>
-
   <script>
   let planoSelecionado = "";
-  const limites = {
-    gratuito: 100,
-    plus: 2050,
-    premium: 10000
-  };
+  const limites = { gratuito: 100, plus: 2050, premium: 10000 };
 
-
-
-  // Gera uma chave aleatória para o usuário (se ainda não existir)
   function gerarChave() {
-    const chaveAtual = document.getElementById("chave").value.trim();
+    const chaveInput = document.getElementById("chave");
     const botao = document.getElementById("btGera");
     const icone = document.getElementById("icone-chave");
-
-    if (chaveAtual) {
-      alert("Você já possui uma chave gerada.");
-      botao.disabled = true;
-      botao.style.backgroundColor = "#ccc";
-      botao.style.cursor = "not-allowed";
-      botao.innerText = "Chave já gerada!";
-      return;
-    }
-
+    if (chaveInput.value.trim()) return;
     const chave = "key_" + Math.random().toString(36).substring(2, 10).toUpperCase();
-    document.getElementById("chave").value = chave;
-
-    // Exibir o ícone pulsando no botão
+    chaveInput.value = chave;
     icone.classList.add("visivel");
-
     botao.disabled = true;
     botao.style.backgroundColor = "#ccc";
     botao.style.cursor = "not-allowed";
     botao.innerText = "Chave gerada com sucesso!";
   }
 
-  // Seleciona um plano e atualiza a interface
   function selecionarPlano(el) {
     document.querySelectorAll(".plan-card").forEach(p => p.classList.remove("selected"));
     el.classList.add("selected");
     planoSelecionado = el.dataset.plano;
-    console.log("Plano selecionado:", planoSelecionado);
   }
 
-  // Função para salvar os dados do usuário e solicitar código para planos pagos
-async function salvar() {
-  const numero = document.getElementById("numero").value.trim();
-  const chave = document.getElementById("chave").value.trim();
-
-  if (!numero || !chave || !planoSelecionado) {
-    alert("Preencha todos os campos e selecione um plano.");
-    return;
-  }
-
-  try {
-    // Verifica na API se o número já existe
-    const res = await fetch(`https://apiseraphina.onrender.com/api/verificar-usuario?numero=${encodeURIComponent(numero)}`);
-    const data = await res.json();
-
-    if (data.existe) {
-      alert("Este número já foi cadastrado anteriormente.");
+  function copiarChave() {
+    const input = document.getElementById("chave");
+    if (!input.value.trim()) {
+      alert("Nenhuma chave para copiar.");
       return;
     }
-
-    // Aqui continua o processo normal de salvar
-    // Ex: fazer POST com o número, chave e planoSelecionado
-    const salvarRes = await fetch("https://apiseraphina.onrender.com/api/salvar-usuario", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({ numero, chave, plano: planoSelecionado })
-    });
-
-    const salvarData = await salvarRes.json();
-
-    if (salvarRes.ok) {
-      localStorage.setItem("user_token", salvarData.token || "true"); // ou use algo mais robusto
-      alert("Informações salvas com sucesso.");
-    } else {
-       alert("Você já salvou suas informações anteriormente.");
-    }
-
-  } catch (err) {
-    console.error(err);
-    alert("Erro ao verificar número.");
+    input.select();
+    document.execCommand("copy");
+    alert("Chave copiada!");
   }
-}
 
+  async function salvar(e) {
+    if (e) e.preventDefault();
+    const numero = document.getElementById("numero").value.trim();
+    const chave = document.getElementById("chave").value.trim();
+    if (!numero || !chave || !planoSelecionado) {
+      alert("Preencha todos os campos e selecione um plano.");
+      return;
+    }
     // Limpa o número para apenas dígitos
     const numeroWhatsApp = numero.replace(/\D/g, "");
-
-    // Se o plano for diferente de gratuito, força salvar como gratuito e redireciona para o WhatsApp
     let planoParaSalvar = planoSelecionado;
     let requests = limites[planoSelecionado];
 
     if (planoSelecionado !== "gratuito") {
       alert("Para liberar planos Plus ou Premium, entre em contato conosco pelo WhatsApp.");
-
-      planoParaSalvar = "gratuito"; // força salvar plano gratuito
+      planoParaSalvar = "gratuito";
       requests = limites["gratuito"];
-
-      // Redireciona para o WhatsApp
       const whatsappNumero = "556981219340";
       const mensagem = encodeURIComponent(`Olá, gostaria de liberar o plano ${planoSelecionado}. Meu número: ${numeroWhatsApp}`);
-      window.location.href = `https://wa.me/${whatsappNumero}?text=${mensagem}`;
+      window.open(`https://wa.me/${whatsappNumero}?text=${mensagem}`, "_blank");
     }
 
     try {
@@ -582,12 +364,9 @@ async function salvar() {
           token: null
         })
       });
-
       const data = await res.json();
-
       if (res.ok) {
         alert(data.message || "Usuário salvo com sucesso!");
-
         if (data.token) {
           localStorage.setItem("user_token", data.token);
           carregarDadosUsuario(data.token);
@@ -598,52 +377,37 @@ async function salvar() {
         alert(data.message || "Erro ao salvar usuário.");
       }
     } catch (err) {
-      console.error("Erro no fetch save-user:", err);
       alert("Erro ao salvar usuário.");
     }
-    
+  }
 
-  // Carrega os dados do usuário pelo token e preenche o formulário e área de info
   async function carregarDadosUsuario(token) {
     if (!token) return;
-
     try {
       const res = await fetch(`https://apiseraphina.onrender.com/api/user-info?token=${token}`);
       if (!res.ok) throw new Error("Token inválido ou usuário não encontrado");
       const data = await res.json();
-
-      // Preencher campos do formulário
       document.getElementById("numero").value = data.numero || "";
       document.getElementById("chave").value = data.chave || "";
       planoSelecionado = data.plano || "";
-
-      // Marcar plano selecionado
       document.querySelectorAll(".plan-card").forEach(card => {
         card.classList.toggle("selected", card.dataset.plano === planoSelecionado);
       });
-
-      // Atualizar informações visíveis
       mostrarInformacoes(data.numero, data.chave, data.plano, data.limite, data.requisicoes);
-
+      // Desativa botão de gerar chave se já existe
+      if (data.chave) {
+        document.getElementById("icone-chave").classList.add("visivel");
+        const botao = document.getElementById("btGera");
+        botao.disabled = true;
+        botao.style.backgroundColor = "#ccc";
+        botao.style.cursor = "not-allowed";
+        botao.innerText = "Chave já gerada!";
+      }
     } catch (e) {
-      console.error("Erro ao carregar dados do usuário:", e);
+      // Não faz nada
     }
   }
 
-  // Copiar chave ao clicar no botão
-  function copiarChave() {
-    const input = document.getElementById("chave");
-    if (!input.value.trim()) {
-      alert("Nenhuma chave para copiar.");
-      return;
-    }
-
-    input.select();
-    document.execCommand("copy");
-    alert("Chave copiada!");
-  }
-
-  // Atualiza a área visível com as informações do usuário
   function mostrarInformacoes(numero, chave, plano, limite, requests) {
     document.getElementById("infoNumero").innerText = ` ${numero}`;
     document.getElementById("infoChave").innerText = ` ${chave}`;
@@ -653,8 +417,41 @@ async function salvar() {
     document.getElementById("infoUsuario").style.display = "block";
   }
 
+  // --- Requests/Modal ---
+  // ...requestsData e funções de modal continuam iguais ao seu código...
+  // (copie o bloco requestsData e funções de modal do seu código atual aqui)
 
-  // Supondo que requestsData já esteja carregado (pode ser via fetch JSON)
+  // --- Listeners e inicialização ---
+  window.addEventListener('DOMContentLoaded', () => {
+    // Botão copiar chave
+    document.getElementById('btnCopiarChave').addEventListener('click', copiarChave);
+    // Botão gerar chave
+    document.getElementById('btGera').addEventListener('click', gerarChave);
+    // Seleção de planos
+    document.querySelectorAll('.plan-card').forEach(card => {
+      card.addEventListener('click', function() {
+        selecionarPlano(this);
+      });
+    });
+    // Formulário
+    document.getElementById('userForm').addEventListener('submit', salvar);
+
+    // Carrega dados do usuário se já existe token
+    const token = localStorage.getItem("user_token");
+    if (token) carregarDadosUsuario(token);
+
+    // Desativa o botão de gerar chave se já existe uma
+    const chaveExistente = document.getElementById("chave").value.trim();
+    if (chaveExistente) {
+      document.getElementById("icone-chave").classList.add("visivel");
+      const botao = document.getElementById("btGera");
+      botao.disabled = true;
+      botao.style.backgroundColor = "#ccc";
+      botao.style.cursor = "not-allowed";
+      botao.innerText = "Chave já gerada!";
+    }
+  });
+
 const requestsData = [
   {
     titulo: "Requisição - Converter YouTube em Áudio (MP3)",
@@ -733,7 +530,7 @@ case 'play': {
 
     fetch: `function baixarAudioYoutube(apikey, videoUrl) {
   fetch(
-    \`/api/playAudio?apikey=\${encodeURIComponent(apikey)}&url=\${encodeURIComponent(videoUrl)}\`
+    \`https://apiseraphina.onrender.com/api/playAudio?apikey=\${encodeURIComponent(apikey)}&url=\${encodeURIComponent(videoUrl)}\`
   )
     .then((res) => {
       if (!res.ok) {
@@ -770,7 +567,7 @@ case 'play': {
 
   try {
     const res = await fetch(
-      \`https://seusite.com/api/consulta/cep/\${cep}?apikey=\${key}\`
+      \`https://apiseraphina.onrender.com/api/consulta/cep/\${cep}?apikey=\${key}\`
     );
     if (!res.ok)
       return client.sendMessage(from, { text: 'Erro ao consultar o CEP.' });
@@ -786,7 +583,7 @@ case 'play': {
 
     fetch: `function consultarCep(apikey, cep) {
   fetch(
-    \`/api/consulta/cep/\${cep}?apikey=\${encodeURIComponent(apikey)}\`
+    \`https://apiseraphina.onrender.com/api/consulta/cep/\${cep}?apikey=\${encodeURIComponent(apikey)}\`
   )
     .then((res) => {
       if (!res.ok) {
@@ -816,7 +613,7 @@ case 'play': {
 
   try {
     const res = await fetch(
-      \`https://seusite.com/api/consulta/ddd/\${ddd}?apikey=\${key}\`
+      \`https://apiseraphina.onrender.com/api/consulta/ddd/\${ddd}?apikey=\${key}\`
     );
     if (!res.ok)
       return client.sendMessage(from, { text: 'Erro ao consultar o DDD.' });
@@ -832,7 +629,7 @@ case 'play': {
 
     fetch: `function consultarDdd(apikey, ddd) {
   fetch(
-    \`/api/consulta/ddd/\${ddd}?apikey=\${encodeURIComponent(apikey)}\`
+    \`https://apiseraphina.onrender.com/api/consulta/ddd/\${ddd}?apikey=\${encodeURIComponent(apikey)}\`
   )
     .then((res) => {
       if (!res.ok) {
@@ -862,7 +659,7 @@ case 'play': {
 
   try {
     const res = await fetch(
-      \`https://seusite.com/api/consulta/clima/aeroporto/\${codigoICAO}?apikey=\${key}\`
+      \`https://apiseraphina.onrender.com/api/consulta/clima/aeroporto/\${codigoICAO}?apikey=\${key}\`
     );
     if (!res.ok)
       return client.sendMessage(from, { text: 'Erro ao consultar o clima.' });
@@ -878,7 +675,7 @@ case 'play': {
 
     fetch: `function consultarClima(apikey, codigoICAO) {
   fetch(
-    \`/api/consulta/clima/aeroporto/\${codigoICAO}?apikey=\${encodeURIComponent(apikey)}\`
+    \`https://apiseraphina.onrender.com/api/consulta/clima/aeroporto/\${codigoICAO}?apikey=\${encodeURIComponent(apikey)}\`
   )
     .then((res) => {
       if (!res.ok) {
@@ -907,7 +704,7 @@ case 'play': {
 
   try {
     const res = await fetch(
-      \`https://seusite.com/api/video-aleatorio?apikey=\${key}\`
+      \`https://apiseraphina.onrender.com/api/video-aleatorio?apikey=\${key}\`
     );
     if (!res.ok)
       return client.sendMessage(from, { text: 'Erro ao obter GIF.' });
@@ -925,7 +722,7 @@ case 'play': {
 
     fetch: `function obterGif(apikey) {
   fetch(
-    \`/api/video-aleatorio?apikey=\${encodeURIComponent(apikey)}\`
+    \`https://apiseraphina.onrender.com/api/video-aleatorio?apikey=\${encodeURIComponent(apikey)}\`
   )
     .then((res) => {
       if (!res.ok) {
@@ -961,7 +758,7 @@ case 'play': {
 
   try {
     const res = await fetch(
-      \`https://seusite.com/api/loli-aleatoria?apikey=\${key}\`
+      \`https://apiseraphina.onrender.com/api/loli-aleatoria?apikey=\${key}\`
     );
     if (!res.ok)
       return client.sendMessage(from, { text: 'Erro ao obter imagem.' });
@@ -979,7 +776,7 @@ case 'play': {
 
     fetch: `function obterImagem(apikey) {
   fetch(
-    \`/api/loli-aleatoria?apikey=\${encodeURIComponent(apikey)}\`
+    \`https://apiseraphina.onrender.com/api/loli-aleatoria?apikey=\${encodeURIComponent(apikey)}\`
   )
     .then((res) => {
       if (!res.ok) {
@@ -1011,7 +808,7 @@ case 'play': {
 
   try {
     const res = await fetch(
-      \`https://seusite.com/api/gerar-cpf?apikey=\${key}\`
+      \`https://apiseraphina.onrender.com/api/gerar-cpf?apikey=\${key}\`
     );
     if (!res.ok)
       return client.sendMessage(from, { text: 'Erro ao gerar CPF.' });
@@ -1027,7 +824,7 @@ case 'play': {
 
     fetch: `function gerarCpf(apikey) {
   fetch(
-    \`/api/gerar-cpf?apikey=\${encodeURIComponent(apikey)}\`
+    \`https://apiseraphina.onrender.com/api/gerar-cpf?apikey=\${encodeURIComponent(apikey)}\`
   )
     .then((res) => {
       if (!res.ok) {
@@ -1056,7 +853,7 @@ case 'play': {
 
   try {
     const res = await fetch(
-      \`https://seusite.com/api/dados-pessoais?apikey=\${key}\`
+      \`https://apiseraphina.onrender.com/api/dados-pessoais?apikey=\${key}\`
     );
     if (!res.ok)
       return client.sendMessage(from, { text: 'Erro ao obter dados pessoais.' });
@@ -1072,7 +869,7 @@ case 'play': {
 
     fetch: `function obterDadosPessoais(apikey) {
   fetch(
-    \`/api/dados-pessoais?apikey=\${encodeURIComponent(apikey)}\`
+    \`https://apiseraphina.onrender.com/api/dados-pessoais?apikey=\${encodeURIComponent(apikey)}\`
   )
     .then((res) => {
       if (!res.ok) {
@@ -1150,25 +947,10 @@ case 'play': {
       }
     });
 
-  window.addEventListener('load', () => {
 
-    const token = localStorage.getItem("user_token");
-    if (token) {
-      carregarDadosUsuario(token);
-    }
-
-    // Desativa o botão de gerar chave se já existe uma
-    const chaveExistente = document.getElementById("chave").value.trim();
-    if (chaveExistente) {
-      document.getElementById("icone-chave").classList.add("visivel");
-      const botao = document.getElementById("btGera");
-      botao.disabled = true;
-      botao.style.backgroundColor = "#ccc";
-      botao.style.cursor = "not-allowed";
-      botao.innerText = "Chave já gerada!";
-    }
-  });
+  // --- Requests/Modal (copie daqui para baixo do seu código atual) ---
+  // ...requestsData, abrirModal, renderRequests, e os listeners do modal...
+  // (copie igual está no seu código, pois já está correto)
   </script>
-
 </body>
 </html>
