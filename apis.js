@@ -271,20 +271,16 @@ router.get("/api/playAudio", async (req, res) => {
   const apikey = req.query.apikey;
   const videoUrl = req.query.url;
 
-  //Sistema de contar se o user ja ecedeu  o limite ou não
-  const chave = apikey; // ou req.headers["x-api-key"]
-  if (!chave) return res.status(400).json({ error: "Chave não enviada." });
-
-  const resultado = atualizarLimitePorChave(chave);
-  if (!resultado.sucesso) {
-    return res.status(403).json({ error: resultado.mensagem });
-  }
-
   if (!apikey || !apikeys.includes(apikey)) {
-   
     return res
       .status(403)
       .json({ error: "API Key inválida ou não fornecida." });
+  }
+
+  // Agora sim, pode atualizar o limite
+  const resultado = atualizarLimitePorChave(apikey);
+  if (!resultado.sucesso) {
+    return res.status(403).json({ error: resultado.mensagem });
   }
 
   if (!videoUrl) {
