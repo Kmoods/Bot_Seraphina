@@ -91,7 +91,7 @@
   const senha = document.getElementById("senhaAdm").value.trim();
   if (!senha) return alert("Digite a senha.");
 
-  const res = await fetch(`https://ApiSeraphina/api/verificar-senha?senha=${senha}`);
+  const res = await fetch(`https://apiseraphina.onrender.com/api/verificar-senha?senha=${senha}`);
   const data = await res.json();
 
   if (data.autorizado) {
@@ -108,7 +108,7 @@
 
 
 async function carregarUsuarios() {
-  const res = await fetch("https://ApiSeraphina/api/usuarios");
+  const res = await fetch("https://apiseraphina.onrender.com/api/usuarios");
   const usuarios = await res.json();
 
   const planosDisponiveis = ["gratis", "plus", "premium"];
@@ -150,7 +150,7 @@ async function carregarUsuarios() {
       if (!novoPlano) return alert("Selecione um plano.");
 
       try {
-        const res = await fetch("https://ApiSeraphina/api/alterar-plano", {
+        const res = await fetch("https://apiseraphina.onrender.com/api/alterar-plano", {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ chave: user.numero, plano: novoPlano })
@@ -177,7 +177,7 @@ async function carregarUsuarios() {
       const confirmacao = confirm(`Deseja excluir o usuário ${user.numero}?`);
       if (!confirmacao) return;
 
-      await fetch(`https://ApiSeraphina/api/deletar-usuario?chave=${user.numero}`, {
+      await fetch(`https://apiseraphina.onrender.com/api/deletar-usuario?chave=${user.numero}`, {
         method: "DELETE"
       });
 
@@ -207,7 +207,7 @@ async function carregarUsuarios() {
       container.innerHTML = "Carregando...";
 
       try {
-        const res = await fetch("https://ApiSeraphina/api/pedidos-codigos");
+        const res = await fetch("https://apiseraphina.onrender.com/api/pedidos-codigos");
         const pedidos = await res.json();
 
         if (!Object.keys(pedidos).length) {
@@ -228,7 +228,7 @@ async function carregarUsuarios() {
 
             window.open(`https://wa.me/55${numero}?text=${encodeURIComponent(mensagem)}`, "_blank");
 
-            await fetch("https://ApiSeraphina/api/enviar-codigo", {
+            await fetch("https://apiseraphina.onrender.com/api/enviar-codigo", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({ numero })

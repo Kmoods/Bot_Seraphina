@@ -4,7 +4,7 @@ const cors = require('cors');
 __path = process.cwd();
 
 const app = express();
-const PORT = 8080;
+const PORT =  process.env.PORT || 8080;
 
 // ✅ Habilita CORS para todas as origens
 app.use(cors());
@@ -28,5 +28,5 @@ app.get('/', (req, res) => {
 
 // ✅ Iniciar o servidor
 app.listen(PORT, () => {
-  console.log(`Servidor online!\n\nServidor rodando em http://localhost:${PORT}`);
+  console.log(`Servidor online!\n\nServidor rodando na porta ${PORT}`);
 });

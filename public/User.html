@@ -543,7 +543,7 @@ h1 {
     }
 
     try {
-      const res = await fetch("https://ApiSeraphina/api/save-user", {
+      const res = await fetch("https://apiseraphina.onrender.com/api/save-user", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -580,7 +580,7 @@ h1 {
     if (!token) return;
 
     try {
-      const res = await fetch(`https://ApiSeraphina/api/user-info?token=${token}`);
+      const res = await fetch(`https://apiseraphina.onrender.com/api/user-info?token=${token}`);
       if (!res.ok) throw new Error("Token inválido ou usuário não encontrado");
       const data = await res.json();
 
@@ -677,7 +677,7 @@ case 'play': {
       caption: legenda,
     }, { quoted: info });
 
-    const apiUrl = \`https://ApiSeraphina/api/playAudio?url=\${encodeURIComponent(url)}&apikey=\${key}\`;
+    const apiUrl = \`https://apiseraphina.onrender.com/api/playAudio?url=\${encodeURIComponent(url)}&apikey=\${key}\`;
     const response = await fetch(apiUrl);
 
     if (!response.ok || !response.headers.get('content-disposition')) {
