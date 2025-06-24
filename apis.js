@@ -198,76 +198,68 @@ router.get("/api/playAudio", async (req, res) => {
   const apikey = req.query.apikey;
   const videoUrl = req.query.url;
 
+  // Verificação de chave de API
   const usuario = await buscarUsuarioPorChave(apikey);
   if (!apikey || !usuario) {
-    return res
-      .status(403)
-      .json({ error: "API Key inválida ou não fornecida." });
+    return res.status(403).json({ error: "API Key inválida ou não fornecida." });
   }
 
-  // Agora sim, pode atualizar o limite
   const resultado = await atualizarLimitePorChave(apikey);
   if (!resultado.sucesso) {
     return res.status(403).json({ error: resultado.mensagem });
   }
 
   if (!videoUrl) {
-    return res
-      .status(400)
-      .json({ error: "É necessário fornecer a URL do vídeo." });
+    return res.status(400).json({ error: "É necessário fornecer a URL do vídeo." });
   }
 
   try {
-    const videoId = new URL(videoUrl).searchParams.get("v");
-    if (!videoId) {
-      return res.status(400).json({ error: "URL do vídeo inválida." });
-    }
+    console.log("🎵 Iniciando processamento de áudio:", videoUrl);
 
-    console.log("🎵 Iniciando download do áudio para URL:", videoUrl);
-
-    const videoInfo = await youtubedl(videoUrl, {
+    // Obtem info do vídeo para nome do arquivo
+    const info = await youtubedl(videoUrl, {
       dumpSingleJson: true,
-      noCheckCertificates: true,
-      noWarnings: true,
-      preferFreeFormats: true,
-      youtubeSkipDashManifest: true,
+      cookies: "./dados/cookies.txt"
     });
 
-    const fileName = `${videoInfo.title.replace(/[<>:"/\\|?*]+/g, "")}.mp3`;
+    const fileName = `${info.title.replace(/[^\w\s-]/g, "").replace(/\s+/g, "_")}_${Date.now()}.mp3`;
     const audioFilePath = path.join(__dirname, "temp", fileName);
 
+    // Baixar e converter direto para mp3
     await youtubedl(videoUrl, {
       output: audioFilePath,
       extractAudio: true,
       audioFormat: "mp3",
       audioQuality: "0",
-      cookies: "./dados/cookies.txt" // coloque o caminho correto aqui
+      noCheckCertificates: true,
+      noWarnings: true,
+      youtubeSkipDashManifest: true,
+      cookies: "./dados/cookies.txt"
     });
 
-    console.log("✅ Download concluído. Enviando...");
+    console.log("✅ Áudio baixado com sucesso:", fileName);
 
     res.setHeader("Content-Disposition", `attachment; filename="${fileName}"`);
     res.download(audioFilePath, fileName, (err) => {
       if (err) {
-        console.error("❌ Erro ao enviar o arquivo:", err.message);
+        console.error("❌ Erro ao enviar:", err.message);
       } else {
-        console.log("📤 Arquivo enviado com sucesso.");
+        console.log("📤 Áudio enviado.");
         setTimeout(() => {
           fs.unlink(audioFilePath, (err) => {
-            if (err)
-              console.error("❌ Erro ao remover o arquivo:", err.message);
-            else console.log("🧹 Arquivo temporário removido.");
+            if (err) console.error("❌ Erro ao apagar temporário:", err.message);
+            else console.log("🧹 Temporário apagado:", fileName);
           });
-        }, 52000);
+        }, 60000); // 60 segundos depois
       }
     });
+
   } catch (error) {
     console.error("❌ Erro geral:", error.message);
-    return res
-      .status(500)
-      .json({ error: "Erro ao processar sua solicitação." });
+    return res.status(500).json({ error: "Erro ao processar o áudio." });
   }
 });
+
 
 // Rota para consulta de CEP
 router.get("/api/consulta/cep/:cep", async (req, res) => {
