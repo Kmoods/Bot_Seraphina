@@ -53,6 +53,12 @@ await db.exec(`
   url TEXT NOT NULL
   )
   `)
+
+  await db.exec(`
+    CREATE TABLE IF NOT EXISTS foto_pokemon_seraphina (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      url TEXT NOT NULL
+      )`)
   // Adicione outras tabelas aqui conforme for migrando outros JSONs
 
   await db.close();

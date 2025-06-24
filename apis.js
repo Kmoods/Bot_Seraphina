@@ -10,6 +10,7 @@ const { v4: uuidv4 } = require("uuid");
 const os = require("os");
 const app = express();
 const router = express.Router();
+const { carregarPokemons } = require('./dados/pokemonDb');
 
 const {
   carregarUsuarios,
@@ -412,95 +413,41 @@ router.get("/api/consulta/clima/aeroporto/:codigoICAO", async (req, res) => {
 });
 
 // Rota para obter um GIF aleatório
+// Exemplo de rota para vídeo aleatório (SQLite)
 router.get("/api/video-aleatorio", async (req, res) => {
   const apikey = req.query.apikey;
-  if (!apikeys) {
-    return res
-      .status(500)
-      .json({ error: "Digite sua apikey no parâmetro do url" });
-  }
+  if (!apikeys.includes(apikey)) return res.sendFile(semkeyPath);
 
-  if (apikeys.includes(apikey)) {
-    // Caminho para o arquivo JSON
-    const videoFilePath = path.join(__dirname, "dados", "videos.json");
-
-    // Função para ler o arquivo JSON
-    function lerArquivoJSON() {
-      const rawdata = fs.readFileSync(videoFilePath);
-      return JSON.parse(rawdata);
-    }
-
-    try {
-      // Carregar os GIFs do arquivo JSON
-      const videoData = lerArquivoJSON();
-      const videos = videoData.videos;
-
-      // Escolher um GIF aleatório
-      const randomIndex = Math.floor(Math.random() * videos.length);
-      const randomVideoUrl = videos[randomIndex];
-
-      // Fazer requisição para obter o GIF
-      const response = await axios.get(randomVideoUrl, {
-        responseType: "arraybuffer",
-      });
-
-      // Enviar o GIF como resposta
-      res.set("Content-Type", "video/mp4"); // Define o tipo de conteúdo como imagem GIF
-      res.send(Buffer.from(response.data, "binary"));
-    } catch (error) {
-      console.error("Erro ao obter o vidso aleatório:", error);
-      res.status(500).send("Erro ao obter VIDEO aleatório");
-    }
-  } else {
-    res.sendFile(semkeyPath);
+  try {
+    const videos = await carregarVideos();
+    if (!videos.length) return res.status(404).send("Nenhum vídeo encontrado");
+    const randomVideoUrl = videos[Math.floor(Math.random() * videos.length)].url;
+    const response = await axios.get(randomVideoUrl, { responseType: "arraybuffer" });
+    res.set("Content-Type", "video/mp4");
+    res.send(Buffer.from(response.data, "binary"));
+  } catch (error) {
+    console.error("Erro ao obter vídeo aleatório:", error);
+    res.status(500).send("Erro ao obter vídeo aleatório");
   }
 });
 
-// Rota para obter uma imagem aleatória
+// Exemplo de rota para loli aleatória (SQLite)
 router.get("/api/loli-aleatoria", async (req, res) => {
   const apikey = req.query.apikey;
-  if (!apikeys) {
-    return res
-      .status(500)
-      .json({ error: "Digite sua apikey no parâmetro do url" });
-  }
+  if (!apikeys.includes(apikey)) return res.sendFile(semkeyPath);
 
-  if (apikeys.includes(apikey)) {
-    // Caminho para o arquivo JSON
-    const loliFilePath = path.join(__dirname, "dados", "loli.json");
-
-    // Função para ler o arquivo JSON
-    function lerArquivoJSON() {
-      const rawdata = fs.readFileSync(loliFilePath);
-      return JSON.parse(rawdata);
-    }
-
-    try {
-      // Carregar as imagens do arquivo JSON
-      const loliData = lerArquivoJSON();
-      const loli_girl = loliData.loli_girl;
-
-      // Escolher uma imagem aleatória
-      const randomIndex = Math.floor(Math.random() * loli_girl.length);
-      const randomLoliUrl = loli_girl[randomIndex];
-
-      // Fazer requisição para obter a imagem
-      const response = await axios.get(randomLoliUrl, {
-        responseType: "arraybuffer",
-      });
-
-      // Enviar a imagem como resposta
-      res.set("Content-Type", "image/jpeg"); // Define o tipo de conteúdo como imagem JPEG
-      res.send(Buffer.from(response.data, "binary"));
-    } catch (error) {
-      console.error("Erro ao obter a imagem aleatória:", error);
-      res.status(500).send("Erro ao obter a imagem aleatória");
-    }
-  } else {
-    res.sendFile(semkeyPath);
+  try {
+    const lolis = await carregarLolis();
+    if (!lolis.length) return res.status(404).send("Nenhuma loli encontrada");
+    const loliAleatoria = lolis[Math.floor(Math.random() * lolis.length)].url;
+    const response = await axios.get(loliAleatoria, { responseType: "arraybuffer" });
+    res.set("Content-Type", "image/jpeg");
+    res.send(Buffer.from(response.data, "binary"));
+  } catch (error) {
+    console.error("Erro ao obter loli aleatória:", error);
+    res.status(500).send("Erro ao obter loli aleatória");
   }
 });
-
 router.get("/api/dados-pessoais", async (req, res) => {
   const apikey = req.query.apikey;
   if (!apikeys) {
@@ -555,151 +502,73 @@ router.get("/api/gerar-cpf", (req, res) => {
 });
 
 // Rota para gerar frase aleatória
-router.get("/api/frase-aleatoria", (req, res) => {
+// Exemplo de rota para frase aleatória (SQLite)
+router.get("/api/frase-aleatoria", async (req, res) => {
   const apikey = req.query.apikey;
-  if (!apikeys) {
-    return res
-      .status(500)
-      .json({ error: "Digite sua apikey no parâmetro do url" });
-  }
+  if (!apikeys.includes(apikey)) return res.sendFile(semkeyPath);
 
-  if (apikeys.includes(apikey)) {
-    try {
-      // Caminho para o arquivo JSON com as frases
-      const filePath = path.join(__dirname, "dados", "frases.json");
-
-      // Lendo o conteúdo do arquivo JSON
-      const frasesData = fs.readFileSync(filePath, "utf8");
-      const frases = JSON.parse(frasesData);
-
-      // Escolhendo aleatoriamente uma frase
-      const randomIndex = Math.floor(Math.random() * frases.length);
-      const fraseAleatoria = frases[randomIndex];
-
-      res.json({ criador: "Kmods", frase: fraseAleatoria });
-    } catch (error) {
-      console.error("Erro ao ler o arquivo JSON:", error);
-      res.status(500).json({ error: "Erro ao obter frase aleatória" });
-    }
-  } else {
-    res.sendFile(semkeyPath);
+  try {
+    const frases = await carregarFrases();
+    if (!frases.length) return res.status(404).send("Nenhuma frase encontrada");
+    const fraseAleatoria = frases[Math.floor(Math.random() * frases.length)].frase;
+    res.json({ criador: "Kmods", frase: fraseAleatoria });
+  } catch (error) {
+    console.error("Erro ao obter frase aleatória:", error);
+    res.status(500).json({ error: "Erro ao obter frase aleatória" });
   }
 });
 
 // Rota para obter imagem aleatória do arquivo JSON local
 router.get("/api/imagem-aleatoria", async (req, res) => {
   const apikey = req.query.apikey;
-  if (!apikeys) {
-    return res
-      .status(500)
-      .json({ error: "Digite sua apikey no parâmetro do url" });
-  }
+  if (!apikeys.includes(apikey)) return res.sendFile(semkeyPath);
 
-  if (apikeys.includes(apikey)) {
-    try {
-      // Caminho para o arquivo JSON
-      const filePath = path.join(__dirname, "dados", "imagens.json");
-
-      // Lendo o conteúdo do arquivo JSON
-      const Imagens_SeraphinaData = fs.readFileSync(filePath, "utf8");
-      const Imagens_Seraphina = JSON.parse(Imagens_SeraphinaData).Imagens_Seraphina;
-
-      // Escolhendo aleatoriamente uma URL de imagem
-      const imagemAleatoria =
-        Imagens_Seraphina[Math.floor(Math.random() * Imagens_Seraphina.length)];
-
-      // Fazendo requisição para obter a imagem
-      const response = await axios.get(imagemAleatoria, {
-        responseType: "arraybuffer",
-      });
-
-      // Enviando a imagem como resposta
-      res.set("Content-Type", "image/jpeg"); // Define o tipo de conteúdo como imagem JPEG
-      res.send(Buffer.from(response.data, "binary"));
-    } catch (error) {
-      console.error("Erro ao obter imagem aleatória:", error);
-      res.status(500).send("Erro ao obter imagem aleatória");
-    }
-  } else {
-    res.sendFile(semkeyPath);
+  try {
+    const imagens = await carregarImagens();
+    if (!imagens.length) return res.status(404).send("Nenhuma imagem encontrada");
+    const imagemAleatoria = imagens[Math.floor(Math.random() * imagens.length)].url;
+    const response = await axios.get(imagemAleatoria, { responseType: "arraybuffer" });
+    res.set("Content-Type", "image/jpeg");
+    res.send(Buffer.from(response.data, "binary"));
+  } catch (error) {
+    console.error("Erro ao obter imagem aleatória:", error);
+    res.status(500).send("Erro ao obter imagem aleatória");
   }
 });
 
 // Rota para obter imagem aleatória do arquivo JSON local
 router.get("/api/imagem-dev", async (req, res) => {
   const apikey = req.query.apikey;
-  if (!apikeys) {
-    return res
-      .status(500)
-      .json({ error: "Digite sua apikey no parâmetro do url" });
-  }
+  if (!apikeys.includes(apikey)) return res.sendFile(semkeyPath);
 
-  if (apikeys.includes(apikey)) {
-    try {
-      // Caminho para o arquivo JSON
-      const filePath = path.join(__dirname, "dados", "fotodev.json");
-
-      // Lendo o conteúdo do arquivo JSON
-      const Imagens_SeraphinaData = fs.readFileSync(filePath, "utf8");
-      const Imagens_Seraphina = JSON.parse(Imagens_SeraphinaData).Imagens_Seraphina;
-
-      // Escolhendo aleatoriamente uma URL de imagem
-      const imagemAleatoria =
-        Imagens_Seraphina[Math.floor(Math.random() * Imagens_Seraphina.length)];
-
-      // Fazendo requisição para obter a imagem
-      const response = await axios.get(imagemAleatoria, {
-        responseType: "arraybuffer",
-      });
-
-      // Enviando a imagem como resposta
-      res.set("Content-Type", "image/jpeg"); // Define o tipo de conteúdo como imagem JPEG
-      res.send(Buffer.from(response.data, "binary"));
-    } catch (error) {
-      console.error("Erro ao obter imagem aleatória:", error);
-      res.status(500).send("Erro ao obter imagem aleatória");
-    }
-  } else {
-    res.sendFile(semkeyPath);
+  try {
+    const fotos = await carregarFotosDev();
+    if (!fotos.length) return res.status(404).send("Nenhuma foto encontrada");
+    const fotoAleatoria = fotos[Math.floor(Math.random() * fotos.length)].url;
+    const response = await axios.get(fotoAleatoria, { responseType: "arraybuffer" });
+    res.set("Content-Type", "image/jpeg");
+    res.send(Buffer.from(response.data, "binary"));
+  } catch (error) {
+    console.error("Erro ao obter foto dev aleatória:", error);
+    res.status(500).send("Erro ao obter foto dev aleatória");
   }
 });
 
 // Rota para obter imagem aleatória do arquivo JSON local
 router.get("/api/imagem-pokemon", async (req, res) => {
   const apikey = req.query.apikey;
-  if (!apikeys) {
-    return res
-      .status(500)
-      .json({ error: "Digite sua apikey no parâmetro do url" });
-  }
+  if (!apikeys.includes(apikey)) return res.sendFile(semkeyPath);
 
-  if (apikeys.includes(apikey)) {
-    try {
-      // Caminho para o arquivo JSON
-      const filePath = path.join(__dirname, "dados", "pokemon.json");
-
-      // Lendo o conteúdo do arquivo JSON
-      const Imagens_SeraphinaData = fs.readFileSync(filePath, "utf8");
-      const Imagens_Seraphina = JSON.parse(Imagens_SeraphinaData).Imagens_Seraphina;
-
-      // Escolhendo aleatoriamente uma URL de imagem
-      const imagemAleatoria =
-        Imagens_Seraphina[Math.floor(Math.random() * Imagens_Seraphina.length)];
-
-      // Fazendo requisição para obter a imagem
-      const response = await axios.get(imagemAleatoria, {
-        responseType: "arraybuffer",
-      });
-
-      // Enviando a imagem como resposta
-      res.set("Content-Type", "image/jpeg"); // Define o tipo de conteúdo como imagem JPEG
-      res.send(Buffer.from(response.data, "binary"));
-    } catch (error) {
-      console.error("Erro ao obter imagem aleatória:", error);
-      res.status(500).send("Erro ao obter imagem aleatória");
-    }
-  } else {
-    res.sendFile(semkeyPath);
+  try {
+    const pokemons = await carregarPokemons();
+    if (!pokemons.length) return res.status(404).send("Nenhuma imagem encontrada");
+    const imagemAleatoria = pokemons[Math.floor(Math.random() * pokemons.length)].url;
+    const response = await axios.get(imagemAleatoria, { responseType: "arraybuffer" });
+    res.set("Content-Type", "image/jpeg");
+    res.send(Buffer.from(response.data, "binary"));
+  } catch (error) {
+    console.error("Erro ao obter imagem aleatória:", error);
+    res.status(500).send("Erro ao obter imagem aleatória");
   }
 });
 

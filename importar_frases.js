@@ -1,6 +1,6 @@
 // importar_frases.js
 const fs = require('fs');
-const openDatabase = require('../db');
+const openDatabase = require('./db');
 
 async function importar() {
   const db = await openDatabase();
