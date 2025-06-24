@@ -11,95 +11,72 @@ const os = require("os");
 const app = express();
 const router = express.Router();
 
+const {
+  carregarUsuarios,
+  salvarUsuario,
+  deletarUsuarioPorChave,
+  buscarUsuarioPorChave
+} = require('./dados/usuariosDb');
+
 const semkeyPath = path.join(__dirname, "public", "semkey.html");
-const PathUser = path.join(__dirname, "dados", "usuarios.json");
 
-let apikeys = []; // lista de chaves atualizada
-
-// Função auxiliar para carregar usuários
-function carregarUsuarios() {
-  if (!fs.existsSync(PathUser)) return [];
-  const dados = fs.readFileSync(PathUser, "utf-8");
-  return JSON.parse(dados || "[]");
-}
-
-// Salvar usuários no arquivo
-function salvarUsuarios(usuarios) {
-  fs.writeFileSync(PathUser, JSON.stringify(usuarios, null, 2));
-}
-
-// 🔁 Atualiza a lista de apikeys globais
-function atualizarApiKeys() {
-  const usuarios = carregarUsuarios();
+let apikeys = [];
+async function atualizarApiKeys() {
+  const usuarios = await carregarUsuarios();
   apikeys = usuarios.map((u) => u.chave);
 }
 atualizarApiKeys();
 
-function atualizarLimitePorChave(chave) {
-  let usuarios = carregarUsuarios();
-  let usuario = usuarios.find((u) => u.chave === chave);
-
+// Atualiza limite por chave
+async function atualizarLimitePorChave(chave) {
+  const usuario = await buscarUsuarioPorChave(chave);
   if (!usuario) {
     return { sucesso: false, mensagem: "Chave não encontrada." };
   }
-
-  if (usuario.requisicoes === usuario.limite) {
+  if (usuario.requisicoes >= usuario.limite) {
     return { sucesso: false, mensagem: "Limite de requisições excedido." };
   }
-
   usuario.requisicoes += 1;
-  salvarUsuarios(usuarios);
-
+  await salvarUsuario(usuario);
   let requisicoes_retante = usuario.limite - usuario.requisicoes;
   return { sucesso: true, restante: requisicoes_retante };
 }
 
-// ✅ Middleware para verificação de API Key
-function verificarKey(req, res, next) {
+// Middleware para verificação de API Key
+async function verificarKey(req, res, next) {
   const key = req.query.apikey;
-
   if (!key) {
     return res.status(403).sendFile(semkeyPath);
   }
-
-  let usuarios = carregarUsuarios();
-  const usuario = usuarios.find((u) => u.chave === key);
-
+  const usuario = await buscarUsuarioPorChave(key);
   if (!usuario) {
     return res.status(403).json({ error: "API Key inválida." });
   }
-
   if (usuario.plano !== "gratuito" && usuario.requisicoes >= usuario.limite) {
     return res.status(429).json({ error: "Limite de requisições atingido." });
   }
-
   usuario.requisicoes = (usuario.requisicoes || 0) + 1;
-  salvarUsuarios(usuarios);
-
+  await salvarUsuario(usuario);
   req.usuario = usuario;
   next();
 }
 
-// 🔄 Reset diário programado para 00:00
-function resetarRequisicoes() {
-  let usuarios = carregarUsuarios();
-  usuarios = usuarios.map((u) => {
+// Reset diário programado para 00:00
+async function resetarRequisicoes() {
+  const usuarios = await carregarUsuarios();
+  for (const u of usuarios) {
     u.requisicoes = 0;
-    return u;
-  });
-
-  salvarUsuarios(usuarios);
-  atualizarApiKeys(); // mantém a lista sincronizada
+    await salvarUsuario(u);
+  }
+  await atualizarApiKeys();
   console.log("🔄 Limites de requisição resetados às 00:00.");
 }
 
 function agendarResetDiario() {
   const agora = new Date();
   const proximoReset = new Date();
-
   proximoReset.setHours(24, 0, 0, 0); // meia-noite
   const tempoRestante = proximoReset - agora;
-
   setTimeout(() => {
     resetarRequisicoes();
     setInterval(resetarRequisicoes, 24 * 60 * 60 * 1000);
@@ -111,11 +88,9 @@ const SENHA_ADMIN = "2008Kmods"; // Substitua pela sua senha
 
 router.get("/api/verificar-senha", (req, res) => {
   const senha = req.query.senha;
-
   if (!senha) {
     return res.status(400).json({ autorizado: false, erro: "Senha não fornecida" });
   }
-
   if (senha === SENHA_ADMIN) {
     return res.json({ autorizado: true });
   } else {
@@ -123,37 +98,29 @@ router.get("/api/verificar-senha", (req, res) => {
   }
 });
 
-// ✅ Endpoint de verificação de chave
-router.post("/api/validar-chave", (req, res) => {
+// Endpoint de verificação de chave
+router.post("/api/validar-chave", async (req, res) => {
   const { numero, chave } = req.body;
-
   if (!numero || !chave) {
     return res
       .status(400)
       .json({ message: "Número e chave são obrigatórios." });
   }
-
-  let usuarios = carregarUsuarios();
-  let usuario = usuarios.find((u) => u.numero === numero && u.chave === chave);
-
-  if (!usuario) {
+  const usuario = await buscarUsuarioPorChave(chave);
+  if (!usuario || usuario.numero !== numero) {
     return res
       .status(403)
       .json({ message: "Chave inválida ou usuário não encontrado." });
   }
-
   if (!usuario.requisicoes) usuario.requisicoes = 0;
   const limite = usuario.limite || 0;
-
   if (usuario.requisicoes === limite) {
     return res
       .status(429)
       .json({ message: "Limite de requisições atingido. Atualize seu plano." });
   }
-
   usuario.requisicoes += 1;
-  salvarUsuarios(usuarios);
-
+  await salvarUsuario(usuario);
   return res.status(200).json({
     message: "Chave válida.",
     plano: usuario.plano,
@@ -162,41 +129,16 @@ router.post("/api/validar-chave", (req, res) => {
   });
 });
 
-router.post("/api/save-user", (req, res) => {
+router.post("/api/save-user", async (req, res) => {
   const { numero, chave, plano, limite, token } = req.body;
-
   if (!numero || !chave || !plano || !limite) {
     return res.status(400).json({ message: "Dados incompletos." });
   }
-
-  let usuarios = carregarUsuarios();
-
-  // Se token existir, atualizar usuário existente
-  let usuario = usuarios.find((u) => u.token === token);
-
-  if (!usuario) {
-    // Criar novo usuário com token único
-    const novoToken = "token_" + Math.random().toString(36).substring(2, 15);
-    usuario = {
-      numero,
-      chave,
-      plano,
-      limite,
-      token: novoToken,
-      requisicoes: 0,
-    };
-    usuarios.push(usuario);
-  } else {
-    // Atualiza dados do usuário existente
-    usuario.numero = numero;
-    usuario.chave = chave;
-    usuario.plano = plano;
-    usuario.limite = limite;
-    // requisicoes fica como está
-  }
-
-  salvarUsuarios(usuarios);
-
+  let usuario = {
+    numero, chave, plano, limite, requisicoes: 0, token: token || "token_" + Math.random().toString(36).substring(2, 15)
+  };
+  await salvarUsuario(usuario);
+  await atualizarApiKeys();
   return res.json({
     message: "Usuário salvo com sucesso.",
     token: usuario.token,
@@ -204,26 +146,18 @@ router.post("/api/save-user", (req, res) => {
 });
 
 // GET /api/user-info
-router.get("/api/user-info", (req, res) => {
+router.get("/api/user-info", async (req, res) => {
   const token = req.query.token;
   if (!token) {
     return res.status(400).json({ message: "Token é obrigatório." });
   }
-
-  const usuarios = carregarUsuarios(); // Certifique que carregarUsuarios retorna um array válido
-  if (!Array.isArray(usuarios)) {
-    return res.status(500).json({ message: "Erro ao carregar usuários." });
-  }
-
+  const usuarios = await carregarUsuarios();
   const usuario = usuarios.find((u) => u.token === token);
-
   if (!usuario) {
     return res
       .status(404)
       .json({ message: "Usuário não encontrado para esse token." });
   }
-
-  // Retornando os dados esperados
   res.json({
     numero: usuario.numero,
     chave: usuario.chave,
@@ -256,29 +190,22 @@ function gerarCPF() {
   return cpf.join("");
 }
 
-// Função para carregar os dados
-function carregarUsuarios() {
-  if (!fs.existsSync(PathUser)) return [];
-  const data = fs.readFileSync(PathUser, "utf8");
-  try {
-    return JSON.parse(data);
-  } catch {
-    return [];
-  }
-}
+// --- Suas rotas de API que usam arquivos JSON para imagens, frases, etc, permanecem iguais ---
 
+// Exemplo de rota protegida por apikey usando banco:
 router.get("/api/playAudio", async (req, res) => {
   const apikey = req.query.apikey;
   const videoUrl = req.query.url;
 
-  if (!apikey || !apikeys.includes(apikey)) {
+  const usuario = await buscarUsuarioPorChave(apikey);
+  if (!apikey || !usuario) {
     return res
       .status(403)
       .json({ error: "API Key inválida ou não fornecida." });
   }
 
   // Agora sim, pode atualizar o limite
-  const resultado = atualizarLimitePorChave(apikey);
+  const resultado = await atualizarLimitePorChave(apikey);
   if (!resultado.sucesso) {
     return res.status(403).json({ error: resultado.mensagem });
   }
@@ -323,7 +250,6 @@ router.get("/api/playAudio", async (req, res) => {
         console.error("❌ Erro ao enviar o arquivo:", err.message);
       } else {
         console.log("📤 Arquivo enviado com sucesso.");
-
         setTimeout(() => {
           fs.unlink(audioFilePath, (err) => {
             if (err)
@@ -552,11 +478,11 @@ router.get("/api/loli-aleatoria", async (req, res) => {
     try {
       // Carregar as imagens do arquivo JSON
       const loliData = lerArquivoJSON();
-      const venomlolis = loliData.venomlolis;
+      const loli_girl = loliData.loli_girl;
 
       // Escolher uma imagem aleatória
-      const randomIndex = Math.floor(Math.random() * venomlolis.length);
-      const randomLoliUrl = venomlolis[randomIndex];
+      const randomIndex = Math.floor(Math.random() * loli_girl.length);
+      const randomLoliUrl = loli_girl[randomIndex];
 
       // Fazer requisição para obter a imagem
       const response = await axios.get(randomLoliUrl, {
@@ -675,12 +601,12 @@ router.get("/api/imagem-aleatoria", async (req, res) => {
       const filePath = path.join(__dirname, "dados", "imagens.json");
 
       // Lendo o conteúdo do arquivo JSON
-      const venomimagensData = fs.readFileSync(filePath, "utf8");
-      const venomimagens = JSON.parse(venomimagensData).venomimagens;
+      const Imagens_SeraphinaData = fs.readFileSync(filePath, "utf8");
+      const Imagens_Seraphina = JSON.parse(Imagens_SeraphinaData).Imagens_Seraphina;
 
       // Escolhendo aleatoriamente uma URL de imagem
       const imagemAleatoria =
-        venomimagens[Math.floor(Math.random() * venomimagens.length)];
+        Imagens_Seraphina[Math.floor(Math.random() * Imagens_Seraphina.length)];
 
       // Fazendo requisição para obter a imagem
       const response = await axios.get(imagemAleatoria, {
@@ -714,12 +640,12 @@ router.get("/api/imagem-dev", async (req, res) => {
       const filePath = path.join(__dirname, "dados", "fotodev.json");
 
       // Lendo o conteúdo do arquivo JSON
-      const venomimagensData = fs.readFileSync(filePath, "utf8");
-      const venomimagens = JSON.parse(venomimagensData).venomimagens;
+      const Imagens_SeraphinaData = fs.readFileSync(filePath, "utf8");
+      const Imagens_Seraphina = JSON.parse(Imagens_SeraphinaData).Imagens_Seraphina;
 
       // Escolhendo aleatoriamente uma URL de imagem
       const imagemAleatoria =
-        venomimagens[Math.floor(Math.random() * venomimagens.length)];
+        Imagens_Seraphina[Math.floor(Math.random() * Imagens_Seraphina.length)];
 
       // Fazendo requisição para obter a imagem
       const response = await axios.get(imagemAleatoria, {
@@ -753,12 +679,12 @@ router.get("/api/imagem-pokemon", async (req, res) => {
       const filePath = path.join(__dirname, "dados", "pokemon.json");
 
       // Lendo o conteúdo do arquivo JSON
-      const venomimagensData = fs.readFileSync(filePath, "utf8");
-      const venomimagens = JSON.parse(venomimagensData).venomimagens;
+      const Imagens_SeraphinaData = fs.readFileSync(filePath, "utf8");
+      const Imagens_Seraphina = JSON.parse(Imagens_SeraphinaData).Imagens_Seraphina;
 
       // Escolhendo aleatoriamente uma URL de imagem
       const imagemAleatoria =
-        venomimagens[Math.floor(Math.random() * venomimagens.length)];
+        Imagens_Seraphina[Math.floor(Math.random() * Imagens_Seraphina.length)];
 
       // Fazendo requisição para obter a imagem
       const response = await axios.get(imagemAleatoria, {
@@ -778,130 +704,83 @@ router.get("/api/imagem-pokemon", async (req, res) => {
 });
 
 // GET - Lista todos os usuários
-router.get("/api/usuarios", (req, res) => {
-  const usuarios = carregarUsuarios();
+router.get("/api/usuarios", async (req, res) => {
+  const usuarios = await carregarUsuarios();
   res.json(usuarios);
 });
 
 
 // DELETE - Remove usuário por chave
-router.delete("/api/deletar-usuario", (req, res) => {
+router.delete("/api/deletar-usuario", async (req, res) => {
   const { chave } = req.query;
-
   if (!chave) {
     return res.status(400).json({ message: "Chave do usuário não fornecida." });
   }
-
-  const usuarios = carregarUsuarios();
-  const novosUsuarios = usuarios.filter((u) => u.chave !== chave);
-
-  if (novosUsuarios.length === usuarios.length) {
+  const usuario = await buscarUsuarioPorChave(chave);
+  if (!usuario) {
     return res.status(404).json({ message: "Usuário não encontrado." });
   }
-
-  salvarUsuarios(novosUsuarios);
+  await deletarUsuarioPorChave(chave);
   res.json({ message: "Usuário deletado com sucesso." });
 });
 
-router.get("/api/verificar-usuario", (req, res) => {
+router.get("/api/verificar-usuario", async (req, res) => {
   const { numero } = req.query;
-  const usuarios = carregarUsuarios();
-
+  const usuarios = await carregarUsuarios();
   const existe = usuarios.some((u) => u.numero === numero);
-
   res.json({ existe });
 });
 
 
 // PUT - Edita usuário (atualiza plano)
-router.put("/api/editar-usuario", (req, res) => {
+router.put("/api/editar-usuario", async (req, res) => {
   const { numero, plano } = req.body;
   if (!numero || !plano) {
     return res
       .status(400)
       .json({ message: "Número e plano são obrigatórios." });
   }
-
-  let usuarios = carregarUsuarios();
+  const usuarios = await carregarUsuarios();
   const usuario = usuarios.find((u) => u.numero === numero);
-
   if (!usuario) {
     return res.status(404).json({ message: "Usuário não encontrado." });
   }
-
   usuario.plano = plano;
-
-  salvarUsuarios(usuarios);
-
+  await salvarUsuario(usuario);
   return res.json({ message: "Plano alterado com sucesso." });
 });
 
-// GET - lista todos usuários
-router.get("/api/usuarios", (req, res) => {
-  const usuarios = carregarUsuarios();
-  res.json(usuarios);
-});
-
-// DELETE - remove usuário por chave (número)
-router.delete("/api/deletar-usuario", (req, res) => {
-  const { chave } = req.query;
-  let usuarios = carregarUsuarios();
-  const novosUsuarios = usuarios.filter((u) => u.numero !== chave);
-
-  if (novosUsuarios.length === usuarios.length) {
-    return res.status(404).json({ message: "Usuário não encontrado." });
-  }
-
-  salvarUsuarios(novosUsuarios);
-  res.json({ message: "Usuário deletado com sucesso." });
-});
-
 // PUT - alterar plano do usuário
-router.put("/api/alterar-plano", (req, res) => {
+router.put("/api/alterar-plano", async (req, res) => {
   const { chave, plano } = req.body;
-  let usuarios = carregarUsuarios();
-  const usuario = usuarios.find((u) => u.numero === chave);
-
-
-  
+  const usuario = await buscarUsuarioPorChave(chave);
   if (!usuario) {
     return res.status(404).json({ message: "Usuário não encontrado." });
   }
-
   usuario.plano = plano;
-
   // Define limite automaticamente conforme plano
   const limitesPorPlano = {
     gratuito: 100,
     plus: 2050,
     premium: 10000,
   };
-
-  usuario.limite = limitesPorPlano[plano] || 60; // padrão 60 se não achar
-
-  salvarUsuarios(usuarios);
+  usuario.limite = limitesPorPlano[plano] || 100;
+  await salvarUsuario(usuario);
   res.json({
     message: "Plano e limite alterados com sucesso.",
     limite: usuario.limite,
   });
 });
 
-router.get("/api/status", (req, res) => {
+router.get("/api/status", async (req, res) => {
   const start = Date.now();
-
-  // Memory usage in bytes
   const memoryUsage = process.memoryUsage();
   const totalMem = os.totalmem();
   const freeMem = os.freemem();
   const usedMem = totalMem - freeMem;
-
-  // Number of users online (assuming all users in usuarios.json are online)
-  const usuarios = carregarUsuarios();
+  const usuarios = await carregarUsuarios();
   const totalUsers = usuarios.length;
-
-  // Simulate ping as response time
   const ping = Date.now() - start;
-
   res.json({
     ping: ping + " ms",
     memoryUsage: {
