@@ -198,7 +198,6 @@ router.get("/api/playAudio", async (req, res) => {
   const apikey = req.query.apikey;
   const videoUrl = req.query.url;
 
-  // Verificação de chave de API
   const usuario = await buscarUsuarioPorChave(apikey);
   if (!apikey || !usuario) {
     return res.status(403).json({ error: "API Key inválida ou não fornecida." });
@@ -216,16 +215,14 @@ router.get("/api/playAudio", async (req, res) => {
   try {
     console.log("🎵 Iniciando processamento de áudio:", videoUrl);
 
-    // Obtem info do vídeo para nome do arquivo
     const info = await youtubedl(videoUrl, {
       dumpSingleJson: true,
-      cookies: "./dados/cookies.txt"
+      cookies: path.join(__dirname, "dados", "cookies.txt")
     });
 
     const fileName = `${info.title.replace(/[^\w\s-]/g, "").replace(/\s+/g, "_")}_${Date.now()}.mp3`;
     const audioFilePath = path.join(__dirname, "temp", fileName);
 
-    // Baixar e converter direto para mp3
     await youtubedl(videoUrl, {
       output: audioFilePath,
       extractAudio: true,
@@ -234,7 +231,7 @@ router.get("/api/playAudio", async (req, res) => {
       noCheckCertificates: true,
       noWarnings: true,
       youtubeSkipDashManifest: true,
-      cookies: "./dados/cookies.txt"
+      cookies: path.join(__dirname, "dados", "cookies.txt")
     });
 
     console.log("✅ Áudio baixado com sucesso:", fileName);
@@ -250,7 +247,7 @@ router.get("/api/playAudio", async (req, res) => {
             if (err) console.error("❌ Erro ao apagar temporário:", err.message);
             else console.log("🧹 Temporário apagado:", fileName);
           });
-        }, 60000); // 60 segundos depois
+        }, 60000); // apagar após 1 minuto
       }
     });
 
