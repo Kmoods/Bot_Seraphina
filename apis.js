@@ -241,6 +241,7 @@ router.get("/api/playAudio", async (req, res) => {
       extractAudio: true,
       audioFormat: "mp3",
       audioQuality: "0",
+      cookies: "./dados/cookies.txt" // coloque o caminho correto aqui
     });
 
     console.log("✅ Download concluído. Enviando...");
