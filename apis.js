@@ -194,68 +194,64 @@ function gerarCPF() {
 // --- Suas rotas de API que usam arquivos JSON para imagens, frases, etc, permanecem iguais ---
 
 // Exemplo de rota protegida por apikey usando banco:
+const ultimasRequisicoes = {}; // cooldown por apikey
+
 router.get("/api/playAudio", async (req, res) => {
   const apikey = req.query.apikey;
   const videoUrl = req.query.url;
 
+  // 🔐 Verifica API Key
   const usuario = await buscarUsuarioPorChave(apikey);
   if (!apikey || !usuario) {
     return res.status(403).json({ error: "API Key inválida ou não fornecida." });
   }
 
+  // ⏱️ Cooldown de 1 minuto
+  const agora = Date.now();
+  const ultima = ultimasRequisicoes[apikey] || 0;
+  if (agora - ultima < 60000) {
+    const tempoRestante = Math.ceil((60000 - (agora - ultima)) / 1000);
+    return res.status(429).json({ error: `Aguarde ${tempoRestante} segundos para nova requisição.` });
+  }
+  ultimasRequisicoes[apikey] = agora;
+
+  // 📊 Verifica limite
   const resultado = await atualizarLimitePorChave(apikey);
   if (!resultado.sucesso) {
     return res.status(403).json({ error: resultado.mensagem });
   }
 
+  // 🎥 Verifica URL
   if (!videoUrl) {
     return res.status(400).json({ error: "É necessário fornecer a URL do vídeo." });
   }
 
   try {
-    console.log("🎵 Iniciando processamento de áudio:", videoUrl);
+    console.log("🎵 Baixando áudio de:", videoUrl);
 
-    const info = await youtubedl(videoUrl, {
-      dumpSingleJson: true,
-      cookies: path.join(__dirname, "dados", "cookies.txt")
-    });
-
-    const fileName = `${info.title.replace(/[^\w\s-]/g, "").replace(/\s+/g, "_")}_${Date.now()}.mp3`;
-    const audioFilePath = path.join(__dirname, "temp", fileName);
-
-    await youtubedl(videoUrl, {
-      output: audioFilePath,
-      extractAudio: true,
-      audioFormat: "mp3",
-      audioQuality: "0",
-      noCheckCertificates: true,
-      noWarnings: true,
-      youtubeSkipDashManifest: true,
-      cookies: path.join(__dirname, "dados", "cookies.txt")
-    });
-
-    console.log("✅ Áudio baixado com sucesso:", fileName);
-
+    const info = await ytdl.getInfo(videoUrl);
+    const fileName = `${info.videoDetails.title.replace(/[^\w\s-]/g, "").replace(/\s+/g, "_")}_${Date.now()}.mp3`;
     res.setHeader("Content-Disposition", `attachment; filename="${fileName}"`);
-    res.download(audioFilePath, fileName, (err) => {
-      if (err) {
-        console.error("❌ Erro ao enviar:", err.message);
-      } else {
-        console.log("📤 Áudio enviado.");
-        setTimeout(() => {
-          fs.unlink(audioFilePath, (err) => {
-            if (err) console.error("❌ Erro ao apagar temporário:", err.message);
-            else console.log("🧹 Temporário apagado:", fileName);
-          });
-        }, 60000); // apagar após 1 minuto
-      }
-    });
+    res.setHeader("Content-Type", "audio/mpeg");
+
+    // 🎧 Stream para conversão com ffmpeg
+    const audioStream = ytdl(videoUrl, { filter: "audioonly", quality: "highestaudio" });
+
+    ffmpeg(audioStream)
+      .audioBitrate(128)
+      .format("mp3")
+      .on("error", (err) => {
+        console.error("❌ Erro ao converter:", err.message);
+        res.status(500).json({ error: "Erro ao converter o áudio." });
+      })
+      .pipe(res, { end: true });
 
   } catch (error) {
     console.error("❌ Erro geral:", error.message);
     return res.status(500).json({ error: "Erro ao processar o áudio." });
   }
 });
+
 
 
 // Rota para consulta de CEP
