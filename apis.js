@@ -228,12 +228,20 @@ router.get("/api/playAudio", async (req, res) => {
     console.log("🎵 Baixando áudio de:", videoUrl);
 
     const info = await ytdl.getInfo(videoUrl);
-    const fileName = `${info.videoDetails.title.replace(/[^\w\s-]/g, "").replace(/\s+/g, "_")}_${Date.now()}.mp3`;
+    const fileName = `${info.videoDetails.title.replace(/[^\u00C0-\u017Fa-zA-Z0-9\s-]/g, "").replace(/\s+/g, "_")}_${Date.now()}.mp3`;
+
     res.setHeader("Content-Disposition", `attachment; filename="${fileName}"`);
     res.setHeader("Content-Type", "audio/mpeg");
 
-    // 🎧 Stream para conversão com ffmpeg
-    const audioStream = ytdl(videoUrl, { filter: "audioonly", quality: "highestaudio" });
+    const audioStream = ytdl(videoUrl, {
+      quality: "highestaudio",
+      requestOptions: {
+        headers: {
+          "User-Agent":
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/119.0.0.0 Safari/537.36"
+        }
+      }
+    });
 
     ffmpeg(audioStream)
       .audioBitrate(128)
