@@ -5,10 +5,8 @@ const path = require("path");
 const search = require("yt-search");
 const ytdl = require("ytdl-core");
 const ffmpeg = require("fluent-ffmpeg");
-const youtubedl = require("youtube-dl-exec");
 const { v4: uuidv4 } = require("uuid");
 const os = require("os");
-const app = express();
 const router = express.Router();
 const { carregarPokemons } = require('./dados/pokemonDb');
 
