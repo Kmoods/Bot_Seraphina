@@ -1,3 +1,4 @@
+require('dotenv').config();
 const express = require("express");
 const axios = require("axios");
 const fs = require("fs");
@@ -9,6 +10,7 @@ const { v4: uuidv4 } = require("uuid");
 const os = require("os");
 const router = express.Router();
 const { carregarPokemons } = require('./dados/pokemonDb');
+
 
 const {
   carregarUsuarios,
@@ -192,6 +194,7 @@ function gerarCPF() {
 // --- Suas rotas de API que usam arquivos JSON para imagens, frases, etc, permanecem iguais ---
 
 // Exemplo de rota protegida por apikey usando banco:
+const API_SECRET = process.env.API_SECRET || "@$@##*&!KMODS2025!@#@001a" ; // MESMA chave do Python!
 const ultimasRequisicoes = {}; // cooldown por apikey
 
 router.get("/api/playAudio", async (req, res) => {
@@ -227,33 +230,24 @@ router.get("/api/playAudio", async (req, res) => {
   try {
     console.log("🎵 Baixando áudio de:", videoUrl);
 
-    const info = await ytdl.getInfo(videoUrl);
-    const fileName = `${info.videoDetails.title.replace(/[^\u00C0-\u017Fa-zA-Z0-9\s-]/g, "").replace(/\s+/g, "_")}_${Date.now()}.mp3`;
-
-    res.setHeader("Content-Disposition", `attachment; filename="${fileName}"`);
-    res.setHeader("Content-Type", "audio/mpeg");
-
-    const audioStream = ytdl(videoUrl, {
-      quality: "highestaudio",
-      requestOptions: {
+    // Chama o microserviço Python
+    const response = await axios.post(
+      "https://youtube-python-seraphinaapi.onrender.com/baixar-audio",
+      { url: videoUrl },
+      {
+        responseType: "stream",
         headers: {
-          "User-Agent":
-            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/119.0.0.0 Safari/537.36"
+          "X-API-SECRET": API_SECRET
         }
       }
-    });
+    );
 
-    ffmpeg(audioStream)
-      .audioBitrate(128)
-      .format("mp3")
-      .on("error", (err) => {
-        console.error("❌ Erro ao converter:", err.message);
-        res.status(500).json({ error: "Erro ao converter o áudio." });
-      })
-      .pipe(res, { end: true });
+    res.setHeader("Content-Disposition", 'attachment; filename="audio.mp3"');
+    res.setHeader("Content-Type", "audio/mpeg");
+    response.data.pipe(res);
 
   } catch (error) {
-    console.error("❌ Erro geral:", error.message);
+    console.error("❌ Erro ao baixar áudio via Python:", error.message);
     return res.status(500).json({ error: "Erro ao processar o áudio." });
   }
 });
