@@ -485,25 +485,30 @@ async function startBot() {
           });
         }
         break;
-
-      case "modo":
-        if (!modoNumero || !modosMap[modoNumero]) {
-          await mandar(
-            `Modo inválido! Use o número correspondente:\n1️⃣ Empresarial\n2️⃣ Escolar\n3️⃣ Facultativo\n4️⃣ Amizade`
-          );
-          break;
+case "modo":
+  if (!modoNumero || !modosMap[modoNumero]) {
+    await mandar(
+      `Modo inválido! Use o número correspondente:\n1️⃣ Empresarial\n2️⃣ Escolar\n3️⃣ Facultativo\n4️⃣ Amizade`
+    );
+    break;
+  }
+  grupoCadastradoSqlite(from, (cadastrado) => {
+    if (!cadastrado) {
+      mandar("❌ Este grupo não está cadastrado. Use !cadastrar primeiro.");
+      return;
+    }
+    client.groupMetadata(from).then((metadata) => {
+      setModoGrupoSqlite(from, metadata.subject, modosMap[modoNumero], (ok) => {
+        if (ok) {
+          mandar(`✅ Modo do grupo definido como: *${modosMap[modoNumero]}*`);
+        } else {
+          mandar("Erro ao definir modo.");
         }
-        client.groupMetadata(from).then((metadata) => {
-          setModoGrupoSqlite(from, metadata.subject, modosMap[modoNumero], (ok) => {
-            if (ok) {
-              mandar(`✅ Modo do grupo definido como: *${modosMap[modoNumero]}*`);
-            } else {
-              mandar("Erro ao definir modo.");
-            }
-          });
-        });
-        break;
-
+      });
+    });
+  });
+  break;
+  
       case "menu":
         getModoGrupoSqlite(from, (modoMenu) => {
           const textoMenu = menu(prefixo, modoMenu);
