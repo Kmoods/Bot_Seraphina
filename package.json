@@ -1,14 +1,25 @@
 {
+<<<<<<< HEAD
   "name": "seraphina-bot",
+=======
+  "name": "SeraphinaV3",
+>>>>>>> 2e0d9a0 (Teste de commit)
   "version": "1.0.0",
   "description": "Criado em 2025, por Kmods",
   "main": "bot.js",
+<<<<<<< HEAD
   "scripts": {
     "start": "node bot.js"
   },
   "author": "Kmods",
   "license": "MIT",
   "private": false,
+=======
+  "license": "MIT",
+  "scripts": {
+    "start": "node bot.js"
+  },
+>>>>>>> 2e0d9a0 (Teste de commit)
   "dependencies": {
     "@ffmpeg-installer/ffmpeg": "^1.1.0",
     "@whiskeysockets/baileys": "^6.7.18",
