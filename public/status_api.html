@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Status da API</title>
+  <style>
+    :root {
+      --bg: #0e0e11;
+      --glass: rgba(255, 255, 255, 0.1);
+      --border: rgba(255, 255, 255, 0.15);
+      --text: #f5f5f7;
+      --accent: #ff4d9d;
+      --accent-dark: #bd2d7d;
+      --radius: 20px;
+      --shadow: 0 0 30px rgba(255, 77, 157, 0.15);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: linear-gradient(149deg, #0d0d0d, #191919);
+      color: var(--text);
+      padding: 3rem 1rem;
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+    }
+
+    .container_status {
+      max-width: 900px;
+      width: 100%;
+      background: var(--glass);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 2.5rem 3rem;
+      backdrop-filter: blur(15px);
+      border: 1px solid var(--border);
+    }
+
+    h1 {
+      text-align: center;
+      margin-bottom: 2rem;
+      font-weight: 800;
+      font-size: 3rem;
+      color: var(--accent);
+      text-shadow: 0 0 15px var(--accent);
+      letter-spacing: 1.5px;
+    }
+
+    .status-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 2rem;
+    }
+
+    .status-card {
+      background: var(--bg);
+      border-radius: var(--radius);
+      padding: 2rem 1.5rem;
+      box-shadow: 0 0 20px rgba(255, 77, 157, 0.4);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      transition: transform 0.35s ease, box-shadow 0.35s ease;
+      cursor: default;
+    }
+
+    .status-card:hover {
+      transform: scale(1.07);
+      box-shadow: 0 0 35px var(--accent);
+    }
+
+    .status-card h2 {
+      margin-bottom: 1rem;
+      font-size: 1.5rem;
+      color: var(--accent);
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+    }
+
+    .status-value {
+      font-size: 2.5rem;
+      font-weight: 900;
+      color: var(--text);
+      text-shadow: 0 0 8px var(--accent-dark);
+      letter-spacing: 0.05em;
+    }
+
+    .status-subvalue {
+      font-size: 1rem;
+      color: var(--accent-dark);
+      margin-top: 0.4rem;
+      font-weight: 600;
+      letter-spacing: 0.03em;
+    }
+
+    .footer {
+      margin-top: 3rem;
+      text-align: center;
+      font-size: 1rem;
+      color: var(--accent-dark);
+      font-weight: 600;
+      letter-spacing: 0.05em;
+    }
+  </style>
+</head>
+<body>
+  <div class="container_status">
+    <h1>Status da API</h1>
+    <div class="status-grid">
+      <div class="status-card" id="ping-card">
+        <h2>Ping</h2>
+        <div class="status-value" id="ping">-- ms</div>
+      </div>
+      <div class="status-card" id="memory-card">
+        <h2>Memória Usada</h2>
+        <div class="status-value" id="memory-used">-- MB</div>
+        <div class="status-subvalue" id="memory-total">de -- MB</div>
+      </div>
+      <div class="status-card" id="ram-card">
+        <h2>RAM Usada</h2>
+        <div class="status-value" id="ram-used">-- MB</div>
+        <div class="status-subvalue" id="ram-total">de -- MB</div>
+      </div>
+      <div class="status-card" id="response-time-card">
+        <h2>Tempo de Resposta</h2>
+        <div class="status-value" id="response-time">-- ms</div>
+      </div>
+      <div class="status-card" id="users-online-card">
+        <h2>Usuários Online</h2>
+        <div class="status-value" id="users-online">--</div>
+      </div>
+    </div>
+    <div class="footer" id="last-updated">Última atualização: --</div>
+  </div>
+
+  <script>
+    // Use relative path to support hosting on Render or other environments
+    const apiBase = "https://ApiSeraphina/api";
+
+    async function fetchStatus() {
+      try {
+        const start = performance.now();
+        const response = await fetch(apiBase + "/status", { cache: "no-store" });
+        const end = performance.now();
+        if (!response.ok) throw new Error("Erro ao buscar status");
+        const data = await response.json();
+        const responseTime = Math.round(end - start);
+
+        document.getElementById("ping").textContent = data.ping;
+        document.getElementById("memory-used").textContent = data.memoryUsage.rss;
+        document.getElementById("memory-total").textContent = "de " + data.memoryUsage.heapTotal;
+        document.getElementById("ram-used").textContent = data.ramUsage.used;
+        document.getElementById("ram-total").textContent = "de " + data.ramUsage.total;
+        document.getElementById("response-time").textContent = responseTime + " ms";
+        document.getElementById("users-online").textContent = data.totalUsers;
+        document.getElementById("last-updated").textContent = "Última atualização: " + new Date(data.updatedAt).toLocaleString();
+      } catch (error) {
+        console.error(error);
+      }
+    }
+
+    fetchStatus();
+    setInterval(fetchStatus, 10000); // Atualiza a cada 10 segundos
+  </script>
+</body>
+</html>
