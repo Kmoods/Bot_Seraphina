@@ -17,7 +17,6 @@ const path = require("path");
 const youtubedl = require('youtube-dl-exec');
 const search = require("yt-search");
 const iaDB = JSON.parse(fs.readFileSync("./ia.json"));
-const cron = require("node-cron");
 const { menu } = require("./menu");
 const fetch = require('node-fetch');
 const { error } = require("console");
@@ -228,9 +227,10 @@ async function startBot() {
     if (!state.creds.me) return;
     const info = m.messages && m.messages[0];
     if (!info || !info.message || info.key.fromMe) return;
+    const body = info.message.conversation || info.message.extendedTextMessage?.text || "";
+    if (!body.startsWith(prefixo)) return; // Só responde comandos com prefixo
     const isGroup = info.key.remoteJid.endsWith("@g.us");
     const from = info.key.remoteJid;
-    const body = info.message.conversation || info.message.extendedTextMessage?.text || "";
     const pushname = info.pushName || "Usuario sem nome";
     const args = body.slice(prefixo.length).trim().split(/ +/);
     const command = args[0].toLowerCase();
@@ -240,25 +240,31 @@ async function startBot() {
     const sender = info.key.participant || info.key.remoteJid;
     const modoNumero = args[1];
     const modosMap = { 1: "empresarial", 2: "escolar", 3: "facultativo", 4: "amizade" };
+const mandar = async (conteudo) => {
+  // Caminho do GIF animado (exemplo: ./data/img/menu.gif)
+  const gifPath = './data/img/menu.gif';
 
-    const mandar = async (conteudo) => {
-      await client.sendMessage(from, { text: `${conteudo} \n\n> ${botTag}` }, { quoted: info });
-    };
+  await client.sendMessage(
+    from,
+    {
+      video: fs.readFileSync(gifPath),
+      caption: `${conteudo}\n\n> ${botTag}`,
+      mimetype: 'video/mp4', // WhatsApp aceita GIF como mp4
+      gifPlayback: true      // Isso faz o WhatsApp exibir como GIF animado
+    },
+    { quoted: info }
+  );
+};
 
     // Verifica cadastro do grupo
     if (isGroup) {
-      await new Promise((resolve) => {
-        grupoCadastradoSqlite(from, (cadastrado) => {
-          if (!cadastrado && !["cadastrar", "registrar"].includes(comando)) {
-            client.sendMessage(from, {
-              text: `🚫 Este grupo não está cadastrado no sistema.\n\n👉 Peça ao dono do bot para cadastrá-lo com *!cadastrar*.`,
-            });
-            resolve(false);
-          } else {
-            resolve(true);
-          }
-        });
+      const cadastrado = await new Promise((resolve) => {
+        grupoCadastradoSqlite(from, (c) => resolve(c));
       });
+      if (!cadastrado && !["cadastrar", "registrar"].includes(comando)) {
+        await mandar(`🚫 Este grupo não está cadastrado no sistema.\n\n👉 Peça ao dono do bot para cadastrá-lo com *!cadastrar*.`);
+        return;
+      }
     }
 
     // Função para verificar se é ADM ou dono
@@ -512,7 +518,7 @@ case "modo":
       case "menu":
         getModoGrupoSqlite(from, (modoMenu) => {
           const textoMenu = menu(prefixo, modoMenu);
-          client.sendMessage(from, { text: textoMenu }, { quoted: info });
+         mandar(textoMenu);
         });
         break;
 
