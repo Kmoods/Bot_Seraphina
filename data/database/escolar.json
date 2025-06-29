@@ -1,0 +1,18 @@
+{
+  "tarefas": [
+    {
+      "id": 1,
+      "descricao": "tarefa2",
+      "data": "28/05/2025",
+      "entregar": "12-03-2026",
+      "feita": true
+    },
+    {
+      "id": 2,
+      "descricao": "teste 1",
+      "data": "28/05/2025",
+      "entregar": "Sem data",
+      "feita": true
+    }
+  ]
+}

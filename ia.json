@@ -1,0 +1,12 @@
+{
+    "mensagens": [
+        { "chave": "oi", "resposta": "Olá! Seja bem-vindo. Como posso te ajudar?" },
+        { "chave": "planos", "resposta": "Temos planos incríveis! Consulte nosso site ou fale comigo aqui." },
+        { "chave": "preço", "resposta": "Nossos preços variam de acordo com o serviço. Quer saber mais?" },
+        { "chave": "bot", "resposta": "Sim, eu sou um bot de atendimento automático. Como posso te ajudar?" }
+    ],
+    "entrada_grupo": "Bem-vindo ao grupo, {user}!",
+    "saida_grupo": "Que pena que {user} saiu do grupo. Até a próxima!",
+    "grupo": "Olá, seu grupo esta em modo: {modoGrupo}.",
+    "status": "teste de status {status}"
+}
