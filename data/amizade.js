@@ -11,7 +11,7 @@ const fs = require('fs');
 const path = require('path');
 
 // Caminho para o arquivo de dados do modo amizade
-const dataFilePath = path.join(__dirname, 'database', 'amizade.json');
+const dataFilePath = path.join(__dirname,  'amizade.json');
 
 // Função para ler os dados do arquivo JSON
 function readData() {

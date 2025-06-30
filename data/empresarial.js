@@ -11,7 +11,7 @@ const fs = require('fs');
 const path = require('path');
 
 // Caminho para o arquivo de dados do modo empresarial
-const dataFilePath = path.join(__dirname, 'database', 'empresarial.json');
+const dataFilePath = path.join(__dirname, 'empresarial.json');
 
 // Função para ler os dados do arquivo JSON
 function readData() {
