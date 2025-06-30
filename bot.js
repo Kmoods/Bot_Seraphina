@@ -7,22 +7,19 @@ const {
   downloadMediaMessage,
 } = require("@whiskeysockets/baileys");
 const pino = require("pino");
-const Tesseract = require("tesseract.js");
+
 const axios = require("axios");
 const readline = require("readline");
 const frasesMotivacionais = require("./Motivation.js");
 const qrcode = require("qrcode-terminal");
 const fs = require("fs");
 const path = require("path");
-const youtubedl = require('youtube-dl-exec');
+
 const search = require("yt-search");
 const iaDB = JSON.parse(fs.readFileSync("./ia.json"));
 const { menu } = require("./menu");
 const fetch = require('node-fetch');
 const { error } = require("console");
-const sqlite3 = require('sqlite3').verbose();
-const dadosSQL = require('./dados_sql_seraphina.js');
-const db = new sqlite3.Database('./data/database/bot.db');
 const botTag = "Obrigado pela preferencia!  Bot Seraphina V3";
 const prefixo = "!";
 
@@ -40,115 +37,148 @@ const timeManaus = () =>
 // Variável global para modo restrito
 global.somenteAdmEscola = false;
 
-// Funções SQLite
-function listarTarefasSqlite(callback) {
-  db.all('SELECT * FROM tarefas', [], (err, rows) => {
-    if (err) return callback("Erro ao acessar o banco de dados.");
-    if (!rows.length) return callback("🗒️ *Lista de Tarefas:*\n\n> Nenhuma tarefa adicionada no momento.");
-    let mensagem = `╭───❍ *📑 Lista de Tarefas*\n│\n`;
-    rows.forEach(tarefa => {
-      mensagem += `│ 🆔 *ID:* ${tarefa.id}
+// Funções utilitárias para JSON
+function lerJSON(nome) {
+  try {
+    return JSON.parse(fs.readFileSync(path.join(__dirname, nome)));
+  } catch {
+    return [];
+  }
+}
+function salvarJSON(nome, dados) {
+  fs.writeFileSync(path.join(__dirname, nome), JSON.stringify(dados, null, 2));
+}
+
+// Funções para grupos (grupos.json)
+function getModoGrupoJson(grupoId, callback) {
+  const grupos = lerJSON("./data/grupos.json");
+  const grupo = grupos.find(g => g.id === grupoId);
+  callback(grupo ? grupo.modo : null);
+}
+function setModoGrupoJson(grupoId, nome, modo, callback) {
+  let grupos = lerJSON("./data/grupos.json");
+  const idx = grupos.findIndex(g => g.id === grupoId);
+  if (idx >= 0) {
+    grupos[idx].nome = nome;
+    grupos[idx].modo = modo;
+  } else {
+    grupos.push({ id: grupoId, nome, modo });
+  }
+  salvarJSON("./data/grupos.json", grupos);
+  callback(true);
+}
+function grupoCadastradoJson(grupoId, callback) {
+  const grupos = lerJSON("./data/grupos.json");
+  callback(!!grupos.find(g => g.id === grupoId));
+}
+
+// Funções para tarefas (tarefas.json)
+function listarTarefasJson(callback) {
+  const tarefas = lerJSON("./data/tarefas.json");
+  if (!tarefas.length) return callback("🗒️ *Lista de Tarefas:*\n\n> Nenhuma tarefa adicionada no momento.");
+  let mensagem = `╭───❍ *📑 Lista de Tarefas*\n│\n`;
+  tarefas.forEach(tarefa => {
+    mensagem += `│ 🆔 *ID:* ${tarefa.id}
 │ ✍️ *Descrição:* ${tarefa.descricao}
 │ 📅 *Postada:* ${tarefa.data}
 │ ⏳ *Entrega:* ${tarefa.entregar}
 │ ${tarefa.feita ? "✅ *Status:* Concluída" : "📋 *Status:* Pendente"}
 │━━━━━━━━━━━━━━━━━\n`;
-    });
-    mensagem += "╰───────────────❍";
-    callback(mensagem);
   });
+  mensagem += "╰───────────────❍";
+  callback(mensagem);
 }
-function adicionarTarefaSqlite(descricao, dataEntrega, callback) {
-  db.run(
-    'INSERT INTO tarefas (descricao, data, entregar, feita) VALUES (?, ?, ?, 0)',
-    [descricao, new Date().toLocaleDateString("pt-BR"), dataEntrega],
-    function (err) {
-      if (err) return callback("Erro ao adicionar tarefa.");
-      callback(`Tarefa adicionada: ${descricao} (Entrega: ${dataEntrega})`);
-    }
-  );
+function adicionarTarefaJson(descricao, dataEntrega, callback) {
+  let tarefas = lerJSON("./data/tarefas.json");
+  const id = tarefas.length ? tarefas[tarefas.length - 1].id + 1 : 1;
+  tarefas.push({
+    id,
+    descricao,
+    data: new Date().toLocaleDateString("pt-BR"),
+    entregar: dataEntrega,
+    feita: false
+  });
+  salvarJSON("./data/tarefas.json", tarefas);
+  callback(`Tarefa adicionada: ${descricao} (Entrega: ${dataEntrega})`);
 }
-function marcarTarefaComoFeitaSqlite(id, callback) {
-  db.run('UPDATE tarefas SET feita = 1 WHERE id = ?', [id], function (err) {
-    if (err) return callback("Erro ao marcar tarefa como feita.");
+function marcarTarefaComoFeitaJson(id, callback) {
+  let tarefas = lerJSON("./data/tarefas.json");
+  const idx = tarefas.findIndex(t => t.id === id);
+  if (idx >= 0) {
+    tarefas[idx].feita = true;
+    salvarJSON("./data/tarefas.json", tarefas);
     callback(`Tarefa #${id} marcada como feita.`);
-  });
+  } else {
+    callback("Erro ao marcar tarefa como feita.");
+  }
 }
-function listarLembretesSqlite(from, callback) {
-  db.all('SELECT * FROM lembretes WHERE local = ?', [from], (err, rows) => {
-    if (err) return callback("Erro ao acessar o banco de dados.");
-    if (!rows.length) return callback("⚠️ Nenhum lembrete encontrado para este chat.");
-    let msg = `📜 *Lembretes deste chat:*\n\n`;
-    rows.forEach((l) => {
-      msg += `🆔 *ID:* ${l.id}\n📝  _${l.descricao}_\n`;
-      if (l.tipo === "auto") {
-        msg += `🔁 *Auto-lembrete:* a cada ${l.frequencia} dia(s)\n📅 *Última:* ${l.ultimaExecucao || "Nenhuma ainda"}\n`;
-      } else {
-        msg += `📅 *Data:* ${l.data || ""}\n⏰ *Hora:* ${l.hora || ""}\n`;
-      }
-      msg += `━━━━━━━━━━━━━━━━━━━━\n`;
-    });
-    callback(msg);
-  });
+function excluirTarefasJson(idsArray, callback) {
+  let tarefas = lerJSON("./data/tarefas.json");
+  const origLength = tarefas.length;
+  tarefas = tarefas.filter(t => !idsArray.includes(t.id));
+  salvarJSON("./data/tarefas.json", tarefas);
+  const removidos = origLength - tarefas.length;
+  if (removidos === 0) callback("⚠️ Nenhuma tarefa encontrada com esses IDs.");
+  else callback(`🗑️ *Tarefas excluídas:* ${idsArray.join(", ")}`);
 }
-function adicionarLembreteSqlite(from, descricao, tipo, frequencia, data, hora, callback) {
-  db.run(
-    'INSERT INTO lembretes (descricao, local, tipo, frequencia, ultimaExecucao, data, hora, dataCriacao) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
-    [descricao, from, tipo, frequencia, null, data, hora, new Date().toISOString().split("T")[0]],
-    function (err) {
-      if (err) return callback("Erro ao adicionar lembrete.");
-      callback(`✅ Lembrete adicionado!\n\n📝 *${descricao}*\n🆔 *ID:* ${this.lastID}`);
+
+// Funções para lembretes (lembretes.json)
+function listarLembretesJson(from, callback) {
+  const lembretes = lerJSON("./data/lembretes.json").filter(l => l.local === from);
+  if (!lembretes.length) return callback("⚠️ Nenhum lembrete encontrado para este chat.");
+  let msg = `📜 *Lembretes deste chat:*\n\n`;
+  lembretes.forEach((l) => {
+    msg += `🆔 *ID:* ${l.id}\n📝  _${l.descricao}_\n`;
+    if (l.tipo === "auto") {
+      msg += `🔁 *Auto-lembrete:* a cada ${l.frequencia} dia(s)\n📅 *Última:* ${l.ultimaExecucao || "Nenhuma ainda"}\n`;
+    } else {
+      msg += `📅 *Data:* ${l.data || ""}\n⏰ *Hora:* ${l.hora || ""}\n`;
     }
-  );
+    msg += `━━━━━━━━━━━━━━━━━━━━\n`;
+  });
+  callback(msg);
 }
-function excluirLembretesSqlite(from, ids, callback) {
+function adicionarLembreteJson(from, descricao, tipo, frequencia, data, hora, callback) {
+  let lembretes = lerJSON("./data/lembretes.json");
+  const id = lembretes.length ? lembretes[lembretes.length - 1].id + 1 : 1;
+  lembretes.push({
+    id,
+    descricao,
+    local: from,
+    tipo,
+    frequencia,
+    ultimaExecucao: null,
+    data,
+    hora,
+    dataCriacao: new Date().toISOString().split("T")[0]
+  });
+  salvarJSON("./data/lembretes.json", lembretes);
+  callback(`✅ Lembrete adicionado!\n\n📝 *${descricao}*\n🆔 *ID:* ${id}`);
+}
+function excluirLembretesJson(from, ids, callback) {
+  let lembretes = lerJSON("./data/lembretes.json");
   const idsArray = ids
     .split(/[\s,]+/)
     .map((id) => parseInt(id))
     .filter((id) => !isNaN(id));
-  if (!idsArray.length) return callback("❌ Nenhum ID válido informado.");
-  let removidos = 0;
-  idsArray.forEach((id, idx) => {
-    db.run('DELETE FROM lembretes WHERE id = ? AND local = ?', [id, from], function (err) {
-      if (!err && this.changes > 0) removidos++;
-      if (idx === idsArray.length - 1) {
-        if (removidos === 0) callback("⚠️ Nenhum lembrete encontrado com esses IDs neste grupo.");
-        else callback(`🗑️ *Lembretes excluídos:* ${idsArray.join(", ")}`);
-      }
-    });
-  });
+  const origLength = lembretes.length;
+  lembretes = lembretes.filter(l => !(l.local === from && idsArray.includes(l.id)));
+  salvarJSON("./data/lembretes.json", lembretes);
+  const removidos = origLength - lembretes.length;
+  if (removidos === 0) callback("⚠️ Nenhum lembrete encontrado com esses IDs neste grupo.");
+  else callback(`🗑️ *Lembretes excluídos:* ${idsArray.join(", ")}`);
 }
-function getModoGrupoSqlite(grupoId, callback) {
-  db.get('SELECT modo FROM grupos WHERE id = ?', [grupoId], (err, row) => {
-    if (err || !row) return callback(null);
-    callback(row.modo);
-  });
+
+// Funções para restrito e auto-lembrete (funcoes.json)
+function lerFuncoesJson(callback) {
+  let funcoes = lerJSON("./data/funcoes.json");
+  if (!funcoes.length) funcoes = [{ autoLembrAtivo: false, restrito: false }];
+  callback(funcoes[0]);
 }
-function setModoGrupoSqlite(grupoId, nome, modo, callback) {
-  db.run(
-    'INSERT OR REPLACE INTO grupos (id, nome, modo) VALUES (?, ?, ?)',
-    [grupoId, nome, modo],
-    function (err) {
-      if (err) return callback(false);
-      callback(true);
-    }
-  );
-}
-function grupoCadastradoSqlite(grupoId, callback) {
-  db.get('SELECT id FROM grupos WHERE id = ?', [grupoId], (err, row) => {
-    callback(!!row);
-  });
-}
-function lerFuncoesSqlite(callback) {
-  db.get('SELECT autoLembrAtivo FROM funcoes', [], (err, row) => {
-    if (err || !row) return callback({ autoLembrAtivo: false });
-    callback({ autoLembrAtivo: !!row.autoLembrAtivo });
-  });
-}
-function salvarFuncoesSqlite(autoLembrAtivo, callback) {
-  db.run('UPDATE funcoes SET autoLembrAtivo = ?', [autoLembrAtivo ? 1 : 0], function (err) {
-    if (callback) callback(!err);
-  });
+function salvarFuncoesJson(autoLembrAtivo, restrito, callback) {
+  let funcoes = [{ autoLembrAtivo, restrito }];
+  salvarJSON("./data/funcoes.json", funcoes);
+  if (callback) callback(true);
 }
 
 async function obterPlaylist(query) {
@@ -240,26 +270,24 @@ async function startBot() {
     const sender = info.key.participant || info.key.remoteJid;
     const modoNumero = args[1];
     const modosMap = { 1: "empresarial", 2: "escolar", 3: "facultativo", 4: "amizade" };
-const mandar = async (conteudo) => {
-  // Caminho do GIF animado (exemplo: ./data/img/menu.gif)
-  const gifPath = './data/img/menu.gif';
-
-  await client.sendMessage(
-    from,
-    {
-      video: fs.readFileSync(gifPath),
-      caption: `${conteudo}\n\n> ${botTag}`,
-      mimetype: 'video/mp4', // WhatsApp aceita GIF como mp4
-      gifPlayback: true      // Isso faz o WhatsApp exibir como GIF animado
-    },
-    { quoted: info }
-  );
-};
+    const mandar = async (conteudo) => {
+      const gifPath = './data/img/menu.gif';
+      await client.sendMessage(
+        from,
+        {
+          video: fs.readFileSync(gifPath),
+          caption: `${conteudo}\n\n> ${botTag}`,
+          mimetype: 'video/mp4',
+          gifPlayback: true
+        },
+        { quoted: info }
+      );
+    };
 
     // Verifica cadastro do grupo
     if (isGroup) {
       const cadastrado = await new Promise((resolve) => {
-        grupoCadastradoSqlite(from, (c) => resolve(c));
+        grupoCadastradoJson(from, (c) => resolve(c));
       });
       if (!cadastrado && !["cadastrar", "registrar"].includes(comando)) {
         await mandar(`🚫 Este grupo não está cadastrado no sistema.\n\n👉 Peça ao dono do bot para cadastrá-lo com *!cadastrar*.`);
@@ -281,7 +309,7 @@ const mandar = async (conteudo) => {
     // Função para verificar modo do grupo
     async function modoGrupoAtual() {
       return await new Promise((resolve) => {
-        getModoGrupoSqlite(from, (modo) => resolve(modo));
+        getModoGrupoJson(from, (modo) => resolve(modo));
       });
     }
 
@@ -308,19 +336,19 @@ const mandar = async (conteudo) => {
         if (!isGroup) {
           return client.sendMessage(from, { text: "❌ Esse comando só funciona em grupos." });
         }
-        grupoCadastradoSqlite(from, (cadastrado) => {
+        grupoCadastradoJson(from, (cadastrado) => {
           if (cadastrado) {
             return client.sendMessage(from, { text: "✅ Este grupo já está cadastrado no sistema." });
           }
           client.groupMetadata(from).then((metadata) => {
             if (modoNumero && modosMap[modoNumero]) {
-              setModoGrupoSqlite(from, metadata.subject, modosMap[modoNumero], (ok) => {
+              setModoGrupoJson(from, metadata.subject, modosMap[modoNumero], (ok) => {
                 client.sendMessage(from, {
                   text: `✅ Grupo cadastrado com sucesso no modo *${modosMap[modoNumero]}*!`,
                 });
               });
             } else {
-              setModoGrupoSqlite(from, metadata.subject, null, (ok) => {
+              setModoGrupoJson(from, metadata.subject, null, (ok) => {
                 client.sendMessage(from, {
                   text: `✅ Grupo cadastrado com sucesso! Use o comando *!modo [número]* para definir o modo:\n\n1️⃣ Empresarial\n2️⃣ Escolar\n3️⃣ Facultativo\n4️⃣ Amizade\n\nPara alterar o modo do grupo a qualquer momento, use o comando *!modo [número]*.`,
                 });
@@ -350,11 +378,11 @@ const mandar = async (conteudo) => {
           tarefasInput.forEach((tarefaStr) => {
             const [descricao, dataEntregaRaw] = tarefaStr.split("/").map((s) => s.trim());
             const dataEntrega = dataEntregaRaw || "Sem data";
-            adicionarTarefaSqlite(descricao, dataEntrega, (msg) => {
+            adicionarTarefaJson(descricao, dataEntrega, (msg) => {
               mensagensAdicionadas.push(`- ${descricao} (Entrega: ${dataEntrega})`);
               count++;
               if (count === tarefasInput.length) {
-                listarTarefasSqlite(async (mensagem) => {
+                listarTarefasJson(async (mensagem) => {
                   await mandar(`Tarefas adicionadas:\n${mensagensAdicionadas.join("\n")}\n\n${mensagem}\n`);
                 });
               }
@@ -372,10 +400,10 @@ const mandar = async (conteudo) => {
         if (ids.length > 0) {
           let count = 0;
           ids.forEach((id) => {
-            marcarTarefaComoFeitaSqlite(id, (msg) => {
+            marcarTarefaComoFeitaJson(id, (msg) => {
               count++;
               if (count === ids.length) {
-                listarTarefasSqlite(async (mensagem) => {
+                listarTarefasJson(async (mensagem) => {
                   await mandar(`Tarefas #${ids.join(", ")} marcadas como feitas ✅\n\n${mensagem}\n\n> Instruções: Para marcar múltiplas tarefas como feitas, use: !feito 1 2 3`);
                 });
               }
@@ -388,13 +416,13 @@ const mandar = async (conteudo) => {
 
       case "tarefas":
       case "tarefa":
-        listarTarefasSqlite(async (mensagem) => {
+        listarTarefasJson(async (mensagem) => {
           await mandar(mensagem);
         });
         break;
 
       case "lembretes":
-        listarLembretesSqlite(from, (mensagem) => {
+        listarLembretesJson(from, (mensagem) => {
           client.sendMessage(from, { text: mensagem });
         });
         break;
@@ -424,12 +452,12 @@ const mandar = async (conteudo) => {
             });
             break;
           }
-          adicionarLembreteSqlite(from, descricao, "auto", frequencia, null, null, (msg) => {
+          adicionarLembreteJson(from, descricao, "auto", frequencia, null, null, (msg) => {
             client.sendMessage(from, { text: msg });
           });
         } else {
           const descricao = partes.join(" ");
-          adicionarLembreteSqlite(from, descricao, "normal", null, null, null, (msg) => {
+          adicionarLembreteJson(from, descricao, "normal", null, null, null, (msg) => {
             client.sendMessage(from, { text: msg });
           });
         }
@@ -448,7 +476,7 @@ const mandar = async (conteudo) => {
             text: "❌ Informe os IDs dos lembretes que deseja excluir.\nExemplo: !del-lembrete 1 2 3",
           });
         } else {
-          excluirLembretesSqlite(from, args.join(" "), (resposta) => {
+          excluirLembretesJson(from, args.join(" "), (resposta) => {
             client.sendMessage(from, { text: resposta });
           });
         }
@@ -476,49 +504,39 @@ const mandar = async (conteudo) => {
             client.sendMessage(from, { text: "❌ Nenhum ID válido informado." });
             break;
           }
-          let removidos = 0;
-          idsArray.forEach((id, idx) => {
-            db.run('DELETE FROM tarefas WHERE id = ?', [id], function (err) {
-              if (!err && this.changes > 0) removidos++;
-              if (idx === idsArray.length - 1) {
-                if (removidos === 0) {
-                  client.sendMessage(from, { text: "⚠️ Nenhuma tarefa encontrada com esses IDs." });
-                } else {
-                  client.sendMessage(from, { text: `🗑️ *Tarefas excluídas:* ${idsArray.join(", ")}` });
-                }
-              }
-            });
+          excluirTarefasJson(idsArray, (resposta) => {
+            client.sendMessage(from, { text: resposta });
           });
         }
         break;
-case "modo":
-  if (!modoNumero || !modosMap[modoNumero]) {
-    await mandar(
-      `Modo inválido! Use o número correspondente:\n1️⃣ Empresarial\n2️⃣ Escolar\n3️⃣ Facultativo\n4️⃣ Amizade`
-    );
-    break;
-  }
-  grupoCadastradoSqlite(from, (cadastrado) => {
-    if (!cadastrado) {
-      mandar("❌ Este grupo não está cadastrado. Use !cadastrar primeiro.");
-      return;
-    }
-    client.groupMetadata(from).then((metadata) => {
-      setModoGrupoSqlite(from, metadata.subject, modosMap[modoNumero], (ok) => {
-        if (ok) {
-          mandar(`✅ Modo do grupo definido como: *${modosMap[modoNumero]}*`);
-        } else {
-          mandar("Erro ao definir modo.");
+      case "modo":
+        if (!modoNumero || !modosMap[modoNumero]) {
+          await mandar(
+            `Modo inválido! Use o número correspondente:\n1️⃣ Empresarial\n2️⃣ Escolar\n3️⃣ Facultativo\n4️⃣ Amizade`
+          );
+          break;
         }
-      });
-    });
-  });
-  break;
-  
+        grupoCadastradoJson(from, (cadastrado) => {
+          if (!cadastrado) {
+            mandar("❌ Este grupo não está cadastrado. Use !cadastrar primeiro.");
+            return;
+          }
+          client.groupMetadata(from).then((metadata) => {
+            setModoGrupoJson(from, metadata.subject, modosMap[modoNumero], (ok) => {
+              if (ok) {
+                mandar(`✅ Modo do grupo definido como: *${modosMap[modoNumero]}*`);
+              } else {
+                mandar("Erro ao definir modo.");
+              }
+            });
+          });
+        });
+        break;
+
       case "menu":
-        getModoGrupoSqlite(from, (modoMenu) => {
+        getModoGrupoJson(from, (modoMenu) => {
           const textoMenu = menu(prefixo, modoMenu);
-         mandar(textoMenu);
+          mandar(textoMenu);
         });
         break;
 
@@ -530,10 +548,10 @@ case "modo":
           break;
         }
         const estado = args[1].toLowerCase();
-        lerFuncoesSqlite((funcoesEstado) => {
+        lerFuncoesJson((funcoesEstado) => {
           if (estado === "on") {
             if (!funcoesEstado.autoLembrAtivo) {
-              salvarFuncoesSqlite(true, (ok) => {
+              salvarFuncoesJson(true, funcoesEstado.restrito, (ok) => {
                 mandar("✅ Sistema de auto-lembrete ativado.");
               });
             } else {
@@ -541,7 +559,7 @@ case "modo":
             }
           } else if (estado === "off") {
             if (funcoesEstado.autoLembrAtivo) {
-              salvarFuncoesSqlite(false, (ok) => {
+              salvarFuncoesJson(false, funcoesEstado.restrito, (ok) => {
                 mandar("✅ Sistema de auto-lembrete desativado.");
               });
             } else {
@@ -659,7 +677,7 @@ ${description || 'Sem descrição disponível.'}
         const conteudo = body.trim();
         const valor_gp = conteudo.replace("!ia", "").trim();
         const valor_final_gp = valor_gp;
-        getModoGrupoSqlite(from, (modoGrupo) => {
+        getModoGrupoJson(from, (modoGrupo) => {
           function Resp(loc) {
             if (loc === "grupo") {
               return iaDB.grupo.replace("{modoGrupo}", `${modoGrupo}`);
