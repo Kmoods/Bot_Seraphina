@@ -2,4 +2,13 @@
 node_modules
 .env
 conexao
-
+data/grupos.json
+data/funcoes.json
+data/amizade.json
+data/empresarial.json
+data/escolar.json
+data/facultativo.json
+data/lembretes.json
+data/tarefas.json
+data/limite_play.json
+OPENAI_API_KEY=sua_chave_aqui

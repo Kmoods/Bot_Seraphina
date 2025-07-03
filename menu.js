@@ -4,45 +4,51 @@ function menu(prefix, modo) {
       return `💼 *Painel Empresarial*:
 
 📋 ${prefix}tarefas – Ver lista de tarefas
-
 🎵 ${prefix}musica – Tocar música ambiente corporativa
-
 ✅ ${prefix}feito ID – Marcar tarefa como concluída
 
 `;
 
     case "escolar":
-      return `🏫 *Menu Escolar*:
+      return `
+╭━━━ 🎓 *Menu Escolar Seraphina* 🎓 ━━━╮
 
-📝 ${prefix}add-tarefa – Adicionar nova tarefa
+📚 *Tarefas & Estudos*
+├─ 📝 *Adicionar tarefa:* ${prefix}add-tarefa
+├─ 📚 *Ver tarefas:* ${prefix}tarefas
+├─ ✅ *Marcar como feita:* ${prefix}feito ID
+├─ ❌ *Excluir tarefa:* ${prefix}del-tarefa ID
 
-📚 ${prefix}tarefas – Ver tarefas escolares
+⏰ *Lembretes & Rotina*
+├─ 🧠 *Ativar auto-lembrete:* ${prefix}auto-lembr on/off
+├─ ⏰ *Adicionar lembrete:* ${prefix}add-lembrete
+├─ 📅 *Ver lembretes:* ${prefix}lembretes
+├─ ❌ *Excluir lembrete:* ${prefix}del-lembrete ID
 
-✅ ${prefix}feito ID – Marcar tarefa como feita
+🔒 *Administração*
+├─ 🔒 *Modo restrito (só ADM):* ${prefix}restrito on/off
+├─ 🏷️ *Definir modo do grupo:* ${prefix}modo 2
 
-🧠 ${prefix}auto-lembr – Ativar lembrete automático de estudos
+🎧 *Diversão & Ajuda*
+├─ 🎵 *Tocar música de estudo (Spotify):* ${prefix}play-spoti
+├─ 🎧 *Play YouTube:* ${prefix}play nome-da-música *(temporariamente inativo)*
+├─ 🤖 *Pergunte à IA:* ${prefix}chat sua pergunta *(temporariamente inativo)*
 
-⏰ ${prefix}add-lembrete – Adicionar lembrete
+╰━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╯
 
-📅 ${prefix}lembretes – Ver lembretes agendados
-
-❌ ${prefix}del-lembrete ID – Excluir lembrete
-
-❌ ${prefix}del-tarefa ID – Excluir tarefa
-
-🔒 ${prefix}restrito on/off – Ativar/desativar modo só ADM pode adicionar/excluir tarefas e lembretes
-
-🎧 ${prefix}play – Use desse jeito: EX: ${prefix}play alok
-
-`;//Arrumar alguns modos aqui!
+*Dicas:*
+- O comando *play-spoti* utiliza o Spotify.
+- O comando *play* utiliza o YouTube, mas está temporariamente inativo.
+- Use sempre o prefixo "${prefix}" antes dos comandos.
+- Para ver este menu novamente, envie: ${prefix}menu
+- Marque tarefas como feitas para manter sua organização!
+`;
 
     case "amizade":
       return `💖 *Menu Amizade*:
 
 📝 ${prefix}tarefas – Ver tarefas compartilhadas
-
 🎶 ${prefix}musica – Tocar playlist para relaxar e curtir
-
 ✅ ${prefix}feito ID – Marcar tarefa como feita
 
 `;
@@ -51,9 +57,7 @@ function menu(prefix, modo) {
       return `🌀 *Menu Personalizado*:
 
 📋 ${prefix}tarefas – Ver suas tarefas
-
 🎵 ${prefix}musica – Tocar trilha motivacional
-
 ✅ ${prefix}feito ID – Marcar tarefa como concluída
 
 `;
@@ -66,5 +70,4 @@ Para configurar o menu de acordo com sua necessidade.`;
   }
 }
 
-// Personalizar os menus
 module.exports = { menu };

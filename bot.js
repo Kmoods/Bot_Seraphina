@@ -18,7 +18,7 @@ const path = require("path");
 const search = require("yt-search");
 const iaDB = JSON.parse(fs.readFileSync("./ia.json"));
 const { menu } = require("./menu");
-const fetch = require('node-fetch');
+const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args));
 const { error } = require("console");
 const botTag = "Obrigado pela preferencia!  Bot Seraphina V3";
 const prefixo = "!";
@@ -199,7 +199,7 @@ async function obterPlaylist(query) {
   });
   const tracks = response.data.tracks.items;
   if (tracks.length > 0) {
-    const track = tracks[0];
+    const track = tracks[0]; 
     return `🎵 Aqui está a música que você pediu: ${track.name} - ${track.artists.map(artist => artist.name).join(", ")}\n${track.external_urls.spotify}`;
   } else {
     return `Desculpe, não consegui encontrar a música "${query}".`;
@@ -283,6 +283,9 @@ async function startBot() {
         { quoted: info }
       );
     };
+    const mandar2 = async (conteudo) => {
+      await client.sendMessage(from, {text: conteudo}, {quoted: info})
+    }
 
     // Verifica cadastro do grupo
     if (isGroup) {
@@ -313,6 +316,24 @@ async function startBot() {
       });
     }
 
+
+const { OpenAI } = require("openai");
+const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+
+async function perguntarChatGPT(pergunta) {
+  try {
+    const completion = await openai.chat.completions.create({
+      model: "gpt-3.5-turbo",
+      messages: [{ role: "user", content: pergunta }],
+      max_tokens: 500,
+      temperature: 0.7
+    });
+    return completion.choices[0].message.content.trim();
+  } catch (e) {
+    console.log(e)
+    return "❌ Erro ao consultar o ChatGPT.";
+  }
+}
     switch (command) {
       // Ativação do modo restrito
       case "restrito":
@@ -448,7 +469,7 @@ async function startBot() {
           const frequencia = parseInt(partes[2]);
           if (!descricao || isNaN(frequencia)) {
             client.sendMessage(from, {
-              text: `❌ *Formato incorreto!*\n\nUse:\n!add-lembrete auto | descrição | frequência (em dias)`,
+              text: `❌ *Formato incorreto!*\n\nUse:\n!add-lembrete (auto)/descrição/frequência (em dias)`,
             });
             break;
           }
@@ -573,7 +594,7 @@ async function startBot() {
         });
         break;
 
-      case "musica":
+      case "play-spoti":
         if (!query) {
           await mandar("❌ Por favor, informe o nome da música após o comando.");
           break;
@@ -588,69 +609,11 @@ async function startBot() {
         }
         break;
 
-      case "play": {
-        if (!q) {
-          return client.sendMessage(from, {
-            text: `❗ Use: ${prefixo + comando} nome da música`,
-          }, { quoted: info });
-        }
-        try {
-          const videoResult = await search(q);
-          const video = videoResult.videos[0];
-          if (!video) {
-            return client.sendMessage(from, {
-              text: `❌ Nenhum resultado encontrado para: "${q}"`,
-            }, { quoted: info });
-          }
-          const { title, url, thumbnail, author, views, durationRaw, timestamp, uploadedAt, description } = video;
-          const dataAgora = new Date();
-          const envioBot = `${dataAgora.getDate().toString().padStart(2, '0')}/${(dataAgora.getMonth()+1).toString().padStart(2, '0')}/${dataAgora.getFullYear()} às ${dataAgora.getHours().toString().padStart(2, '0')}:${dataAgora.getMinutes().toString().padStart(2, '0')}`;
-          const legenda = `
-🎶 *${title}*
-
-📄 *Descrição Completa:*
-${description || 'Sem descrição disponível.'}
-
-📺 *Canal:* ${author.name}
-⏱ *Duração:* ${durationRaw || timestamp || 'Desconhecida'}
-👁 *Visualizações:* ${views || 'Desconhecidas'}
-📅 *Publicado no YouTube:* ${uploadedAt || 'Data indisponivel'}
-🔗 *Link:* ${url}
-
-👤 *Solicitado por:* @${pushname}
-📥 *Enviado pelo bot em:* ${envioBot}
-
-⏬ Isso pode levar alguns minutos, caso o audio seja longo aguarde, baixando o áudio...
-> ${botTag}
-          `.trim();
-          await client.sendMessage(from, {
-            image: { url: thumbnail },
-            caption: legenda,
-          }, { quoted: info });
-          const apiUrl = `https://apiseraphina.onrender.com/api/playAudio?url=${encodeURIComponent(url)}&apikey=key_KTLU94DA`;
-          const response = await fetch(apiUrl);
-          if (!response.ok || !response.headers.get('content-disposition')) {
-            const error = await response.json().catch(() => ({}));
-            console.error("❌ Erro na API:", error);
-            return client.sendMessage(from, {
-              text: `❌ Erro ao processar áudio: ${error.error || 'resposta inválida'}`,
-            }, { quoted: info });
-          }
-          const fileBuffer = await response.buffer();
-          await client.sendMessage(from, {
-            audio: fileBuffer,
-            mimetype: 'audio/mp4',
-            ptt: false,
-          }, { quoted: info });
-          console.log(`✅ Áudio "${title}" enviado com sucesso.`);
-        } catch (err) {
-          console.error("❌ Erro no comando play:", err);
-          await client.sendMessage(from, {
-            text: '❌ Ocorreu um erro ao processar o comando. Tente novamente.',
-          }, { quoted: info });
-        }
-        break;
-      }
+case "play": {
+  return client.sendMessage(from, {
+    text: "🚫 O comando !play está temporariamente inativo. Devido a problemas no sistema de api!",
+  }, { quoted: info });
+}
 
       case 'gif':
         const key = "key_KTLU94DA";
@@ -672,7 +635,24 @@ ${description || 'Sem descrição disponível.'}
         }
         break;
 
-      case "ia":
+// Adicione este código no seu switch(command):
+
+case "chat":
+  if (!query) {
+    await mandar2("❌ Por favor, envie sua pergunta após o comando.");
+    break;
+  }
+  await mandar2("🤖 Pensando...");
+  try {
+    const respostaIA = await perguntarChatGPT(query);
+    await mandar2(respostaIA);
+  } catch (e) {
+    await mandar2("❌ Não consegui responder sua pergunta agora.");
+  }
+  break;
+
+
+      case "ia_sistema":
         const dados = ["grupo", "status"];
         const conteudo = body.trim();
         const valor_gp = conteudo.replace("!ia", "").trim();
@@ -702,6 +682,219 @@ ${description || 'Sem descrição disponível.'}
           }
         });
         break;
+
+      // Calculadora avançada (expressões, potências, raiz, seno, etc)
+                      case "calc": {
+                const math = require('mathjs');
+              
+                const explicacoes = [
+                  {
+                    termo: ["sqrt", "raiz quadrada"],
+                    nome: "Raiz Quadrada",
+                    explicacao: "A raiz quadrada de um número é o valor que, multiplicado por ele mesmo, resulta nesse número. Exemplo: sqrt(16) = 4.",
+                    buscaYoutube: "raiz quadrada matemática"
+                  },
+                  {
+                    termo: ["cbrt", "raiz cúbica"],
+                    nome: "Raiz Cúbica",
+                    explicacao: "A raiz cúbica de um número é o valor que, multiplicado por ele mesmo três vezes, resulta nesse número. Exemplo: cbrt(27) = 3.",
+                    buscaYoutube: "raiz cúbica matemática"
+                  },
+                  {
+                    termo: ["sin", "seno"],
+                    nome: "Seno",
+                    explicacao: "O seno é uma função trigonométrica que relaciona o ângulo de um triângulo retângulo com a razão entre o cateto oposto e a hipotenusa.",
+                    buscaYoutube: "seno trigonometria"
+                  },
+                  {
+                    termo: ["cos", "cosseno"],
+                    nome: "Cosseno",
+                    explicacao: "O cosseno é uma função trigonométrica que relaciona o ângulo de um triângulo retângulo com a razão entre o cateto adjacente e a hipotenusa.",
+                    buscaYoutube: "cosseno trigonometria"
+                  },
+                  {
+                    termo: ["tan", "tangente"],
+                    nome: "Tangente",
+                    explicacao: "A tangente é uma função trigonométrica que relaciona o ângulo de um triângulo retângulo com a razão entre o cateto oposto e o cateto adjacente.",
+                    buscaYoutube: "tangente trigonometria"
+                  },
+                  {
+                    termo: ["log", "logaritmo"],
+                    nome: "Logaritmo",
+                    explicacao: "O logaritmo é o expoente ao qual a base deve ser elevada para se obter um número. Exemplo: log(100, 10) = 2.",
+                    buscaYoutube: "logaritmo matemática"
+                  },
+                  {
+                    termo: ["abs", "módulo"],
+                    nome: "Módulo",
+                    explicacao: "O módulo de um número é o seu valor absoluto, ou seja, sem sinal. Exemplo: abs(-10) = 10.",
+                    buscaYoutube: "valor absoluto matemática"
+                  },
+                  {
+                    termo: ["^", "potência"],
+                    nome: "Potência",
+                    explicacao: "Potência é uma operação matemática que representa a multiplicação de um número por ele mesmo várias vezes. Exemplo: 2^3 = 8.",
+                    buscaYoutube: "potenciação matemática"
+                  },
+                  {
+                    termo: ["!", "fatorial"],
+                    nome: "Fatorial",
+                    explicacao: "O fatorial de um número é o produto de todos os inteiros positivos menores ou iguais a ele. Exemplo: 5! = 5×4×3×2×1 = 120.",
+                    buscaYoutube: "fatorial matemática"
+                  },
+                  {
+                    termo: ["%", "porcentagem"],
+                    nome: "Porcentagem",
+                    explicacao: "Porcentagem é uma razão que indica uma parte de 100. Exemplo: 50% de 200 = 100.",
+                    buscaYoutube: "porcentagem matemática"
+                  }
+                  // Adicione mais funções se quiser!
+                ];
+              
+                const expressao = args.slice(1).join(" ");
+                if (!expressao) {
+                  await mandar(
+              `🧮 *Calculadora Avançada Seraphina* 🧮
+              
+              Você pode calcular expressões matemáticas, científicas e funções avançadas.  
+              Veja abaixo o que é possível calcular e exemplos de uso:
+              
+              ╭─────────────❍
+              │ ➕ *Soma:*           !calc 2+2
+              │ ➖ *Subtração:*      !calc 10-3
+              │ ✖️ *Multiplicação:*  !calc 5*7
+              │ ➗ *Divisão:*        !calc 20/4
+              │ 🟰 *Parênteses:*     !calc (2+3)*4
+              │ ² *Potência:*        !calc 2^8
+              │ √ *Raiz quadrada:*   !calc sqrt(16)
+              │ ∛ *Raiz cúbica:*     !calc cbrt(27)
+              │ % *Porcentagem:*     !calc 50*10%
+              │ π *Pi:*              !calc pi*2
+              │ 📐 *Seno:*           !calc sin(30 deg)
+              │ 📐 *Cosseno:*        !calc cos(60 deg)
+              │ 📐 *Tangente:*       !calc tan(45 deg)
+              │ log *Logaritmo:*     !calc log(100, 10)
+              │ e *Número de Euler:* !calc e^2
+              │ ! *Fatorial:*        !calc 5!
+              │ |x| *Módulo:*        !calc abs(-10)
+              │ min/max *Mín/Máx:*   !calc min(2,5,1) | !calc max(2,5,1)
+              │ round *Arredonda:*   !calc round(3.7)
+              │ floor/ceil *Piso/Teto:* !calc floor(3.7) | !calc ceil(3.2)
+              │ exp *Exponencial:*   !calc exp(2)
+              │ random *Aleatório:*  !calc random()
+              ╰─────────────❍
+              
+              *Exemplos avançados:*
+              - !calc sqrt(25)+sin(30 deg)*2^3
+              - !calc log(1000, 10)
+              - !calc (5+3)!/2
+              
+              *Dicas:*
+              - Use "deg" para graus e "rad" para radianos em funções trigonométricas.
+              - Você pode combinar várias operações em uma expressão.
+              - Funções disponíveis: sqrt, cbrt, sin, cos, tan, log, abs, min, max, round, floor, ceil, exp, random, pow, pi, e, fatorial (!), porcentagem (%).
+              
+              > Sempre use !calc seguido da expressão desejada.
+              `
+                  );
+                  break;
+                }
+                try {
+                  const resultado = math.evaluate(expressao);
+              
+                  // Detecta função principal e recomenda vídeos
+                  let explicacao = null;
+                  for (const item of explicacoes) {
+                    if (item.termo.some(t => expressao.toLowerCase().includes(t))) {
+                      explicacao = item;
+                      break;
+                    }
+                  }
+              
+                  let recomendacoes = "";
+                  if (explicacao) {
+                    const yt = await search(explicacao.buscaYoutube);
+                    if (yt && yt.videos && yt.videos.length > 0) {
+                      recomendacoes = "\n━━━━━━━━━━━━━━━━━━━━━━\n🎬 *Vídeos recomendados (apenas sugestão):*";
+                      yt.videos.slice(0, 3).forEach((video, i) => {
+                        recomendacoes += `\n${i + 1}. ${video.title}\n${video.url}`;
+                      });
+                    }
+                  }
+              
+                  let resposta = `
+              ╭─────────────❍
+              │ 🧮 *Expressão:* \`\`\`${expressao}\`\`\`
+              │ 
+              │ ✅ *Resultado:* \`\`\`${resultado}\`\`\`
+              ╰─────────────❍
+              `;
+              
+                  if (explicacao) {
+                    resposta += `\n📚 *Explicação (${explicacao.nome}):*\n${explicacao.explicacao}`;
+                  }
+              
+                  if (recomendacoes) {
+                    resposta += recomendacoes;
+                  }
+                  await mandar(resposta);
+              
+                } catch {
+                  await mandar(
+                    "❌ Expressão inválida. Use !calc e veja exemplos e instruções detalhadas."
+                  );
+                }
+                break;
+              }
+            // Sorteia um aluno do grupo (útil para apresentações, trabalhos, etc)
+      case "sorteio":
+        if (!isGroup) {
+          await mandar("❌ Este comando só pode ser usado em grupos.");
+          break;
+        }
+        const groupMeta = await client.groupMetadata(from);
+        const participantes = groupMeta.participants.filter(p => !p.id.endsWith("g.us"));
+        const sorteado = participantes[Math.floor(Math.random() * participantes.length)];
+        await client.sendMessage(from, {
+          text: `🎲 Sorteado: @${sorteado.id.split("@")[0]}`,
+          mentions: [sorteado.id]
+        }, { quoted: info });
+        break;
+
+      // Dica de estudo aleatória
+      case "dica":
+        const dicas = [
+          "📚 Faça resumos dos conteúdos para fixar melhor o aprendizado.",
+          "⏰ Estude um pouco todos os dias, não deixe para a última hora.",
+          "💤 Durma bem antes das provas, o sono ajuda na memória.",
+          "📝 Resolva exercícios antigos para praticar.",
+          "🎧 Ouça músicas calmas enquanto revisa a matéria.",
+          "🤓 Explique a matéria para alguém, isso ajuda a entender melhor.",
+          "📅 Use uma agenda para organizar suas tarefas e prazos.",
+          "🍎 Faça pausas curtas durante os estudos para descansar a mente."
+        ];
+        const dica = dicas[Math.floor(Math.random() * dicas.length)];
+        await mandar(dica);
+        break;
+
+      
+
+      // Consulta feriados nacionais do Brasil
+      case "feriados":
+        try {
+          const ano = new Date().getFullYear();
+          const res = await fetch(`https://brasilapi.com.br/api/feriados/v1/${ano}`);
+          const feriados = await res.json();
+          let msg = `🇧🇷 *Feriados Nacionais de ${ano}:*\n\n`;
+          feriados.forEach(f => {
+            msg += `📅 ${f.date} - ${f.name}\n`;
+          });
+          await mandar(msg);
+        } catch {
+          await mandar("❌ Não foi possível obter os feriados nacionais.");
+        }
+        break;
+
     }
   });
 }
