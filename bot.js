@@ -316,8 +316,7 @@ async function startBot() {
       });
     }
 
-
-/*const { OpenAI } = require("openai");
+const { OpenAI } = require("openai");
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
 async function perguntarChatGPT(pergunta) {
@@ -334,7 +333,7 @@ async function perguntarChatGPT(pergunta) {
     return "❌ Erro ao consultar o ChatGPT.";
   }
 }
-*/
+
     switch (command) {
       // Ativação do modo restrito
       case "restrito":
