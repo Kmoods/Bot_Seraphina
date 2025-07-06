@@ -5,6 +5,9 @@ const {
   DisconnectReason,
   downloadContentFromMessage,
   downloadMediaMessage,
+  generateWAMessageFromContent,
+  proto,
+  prepareWAMessageMedia,
 } = require("@whiskeysockets/baileys");
 const pino = require("pino");
 
@@ -14,9 +17,10 @@ const frasesMotivacionais = require("./Motivation.js");
 const qrcode = require("qrcode-terminal");
 const fs = require("fs");
 const path = require("path");
-
+const ffmpeg = require('fluent-ffmpeg')
 const search = require("yt-search");
 const iaDB = JSON.parse(fs.readFileSync("./ia.json"));
+const { exec } = require("child_process")
 const { menu } = require("./menu");
 const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args));
 const { error } = require("console");
@@ -270,19 +274,15 @@ async function startBot() {
     const sender = info.key.participant || info.key.remoteJid;
     const modoNumero = args[1];
     const modosMap = { 1: "empresarial", 2: "escolar", 3: "facultativo", 4: "amizade" };
-    const mandar = async (conteudo) => {
-      const gifPath = './data/img/menu.gif';
-      await client.sendMessage(
-        from,
-        {
-          video: fs.readFileSync(gifPath),
-          caption: `${conteudo}\n\n> ${botTag}`,
-          mimetype: 'video/mp4',
-          gifPlayback: true
-        },
-        { quoted: info }
-      );
-    };
+  const Random = Math.random(10)
+    const altpdf = Object.keys(info.message)
+    const type = altpdf[0] == 'senderKeyDistributionMessage' ? altpdf[1] == 'messageContextInfo' ? altpdf[2] : altpdf[1] : altpdf[0]
+   type_message = JSON.stringify(info.message)
+    const isQuotedImage = type === "extendedTextMessage" && type_message.includes("imageMessage");
+const imagem_menu = "./data/img/menu.jpg"
+const mandar = (conteudo) => {
+  client.sendMessage(from, {image: fs.readFileSync(imagem_menu), caption: conteudo}, {quoted: info})
+}
     const mandar2 = async (conteudo) => {
       await client.sendMessage(from, {text: conteudo}, {quoted: info})
     }
@@ -317,23 +317,7 @@ async function startBot() {
     }
 
 
-const { OpenAI } = require("openai");
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
-async function perguntarChatGPT(pergunta) {
-  try {
-    const completion = await openai.chat.completions.create({
-      model: "gpt-3.5-turbo",
-      messages: [{ role: "user", content: pergunta }],
-      max_tokens: 500,
-      temperature: 0.7
-    });
-    return completion.choices[0].message.content.trim();
-  } catch (e) {
-    console.log(e)
-    return "❌ Erro ao consultar o ChatGPT.";
-  }
-}
     switch (command) {
       // Ativação do modo restrito
       case "restrito":
@@ -635,22 +619,107 @@ case "play": {
         }
         break;
 
-// Adicione este código no seu switch(command):
+case 's': case 'f': case 'stk': case 'fig':
+if (!isQuotedImage) return mandar2(`Marque uma foto ou video com ${p + comando}`)
+var stream = await downloadContentFromMessage(info.message.imageMessage || info.message.extendedTextMessage?.contextInfo.quotedMessage.imageMessage, 'image')
+mandar2("aguarde...")
+var buffer = Buffer.from([])
+for await(const chunk of stream) {
+ buffer = Buffer.concat([buffer, chunk])}
+let ran = `figurinha${Random}.webp`
+fs.writeFileSync(`./${ran}`, buffer)
+ffmpeg(`./${ran}`)
+.on("error", console.error)
+ .on("end", () => {
+exec(`webpmux -set exif ./dados/${ran} -o ./${ran}`, async (error) => {
+  
+client.sendMessage(from,{ 
+sticker: fs.readFileSync(`./${ran}`) 
+}, {quoted: info })
 
-case "chat":
-  if (!query) {
-    await mandar2("❌ Por favor, envie sua pergunta após o comando.");
+fs.unlinkSync(`./${ran}`)
+})
+})
+.addOutputOptions([
+"-vcodec", 
+"libwebp", 
+"-vf", 
+"scale='min(320,iw)':min'(320,ih)':force_original_aspect_ratio=decrease,fps=15, pad=320:320:-1:-1:color=white@0.0, split [a][b]; [a] palettegen=reserve_transparent=on:transparency_color=ffffff [p]; [b][p] paletteuse"
+      ])
+.toFormat('webp')
+.save(`${ran}`)
+ break
+
+case 'v':
+var contactMessage = generateWAMessageFromContent(from, proto.Message.fromObject({
+"contactMessage": {
+"displayName": "ＫＭＯＤＳ 💭",
+"vcard": "BEGIN:VCARD\nVERSION:3.0\nN:;;; ＫＭＯＤＳ 💭 ;\nFN: ＫＭＯＤＳ 💭 \nitem1.TEL:556981134127\nitem1.X-ABLabel:Celular\nEND:VCARD"
+}}), { userJid: from, quoted: info})
+client.relayMessage(from, contactMessage.message, { messageId: contactMessage.key.id })
+break
+
+case 'nomegp':
+if (!isGroup) return mandar2(`Este comando so pode ser usado em grupo`);
+if (!q) return mandar2(` `);
+client.groupUpdateSubject(from, `${q}`)
+client.sendMessage(from, {text: 'Sucesso, alterou o nome do grupo'})
+break
+
+case 'fotogp':
+    if (!isGroup) return mandar2(`Este comando só pode ser usado em grupo`);
+    if (!isQuotedImage) return mandar2(`Marque uma imagem com ${p + comando} para alterar a foto do grupo`);
+
+    try {
+        const stream = await downloadContentFromMessage(
+            info.message?.extendedTextMessage?.contextInfo?.quotedMessage?.imageMessage,
+            'image'
+        );
+
+        let buffer = Buffer.from([]);
+        for await (const chunk of stream) {
+            buffer = Buffer.concat([buffer, chunk]);
+        }
+
+        const Jimp = require('jimp'); // funciona com jimp@0.22.10
+        const image = await Jimp.read(buffer);
+        const resized = await image.resize(720, 720).getBufferAsync(Jimp.MIME_JPEG);
+
+        await client.updateProfilePicture(from, resized);
+        client.sendMessage(from, { text: '✅ Sucesso! A imagem do grupo foi atualizada.' }, { quoted: info });
+
+    } catch (err) {
+        console.error(err);
+        mandar2('❌ Erro ao alterar a imagem do grupo. Verifique se o bot é admin e se a imagem está válida.');
+    }
     break;
-  }
-  await mandar2("🤖 Pensando...");
-  try {
-    const respostaIA = await perguntarChatGPT(query);
-    await mandar2(respostaIA);
-  } catch (e) {
-    await mandar2("❌ Não consegui responder sua pergunta agora.");
-  }
-  break;
 
+
+case 'report':
+case 'bug':
+if (!q) return mandar2('Exemplo: !report bug no menu 18... por favor fale o nome so comando que esta com bugs, obrigado.')
+mandar2(`${pushname} Obrigado pela colaboração, o bug foi reportado ao meu criador...
+
+<♨️>bugs falsos nao serão respondidos`)
+let templateMesssage = {
+image: {url: imagem_menu,
+quoted: info},
+caption: `♨️𝗨𝗺 𝗕𝘂𝗴♨️\nDo Número: @${sender.split('@')[0]},\nReportou:\n${q}\n> Bot Seraphina`
+}
+client.sendMessage("556981134127@s.whatsapp.net",templateMesssage)
+break
+
+case 'novocmd':
+if (!q) return mandar2('Exemplo: !novocmd coloca antilink ou a case do novo cmd que quer que adicione no bot.')
+mandar2(`${pushname} Obrigado pela colaboração, a sua idea foi reportada ao meu criador.😊`)
+const qp = args.join(" ")
+let templateMessage = {
+image: {url: imagem_menu,
+quoted: info},
+caption: `♨️IDEIA DE CMD♨️\nDo Número: @${sender.split('@')[0]},\nA Ideia É:\n ${q}\n> Bot Seraphina`,
+}
+client.sendMessage("556981134127@s.whatsapp.net",templateMessage)
+break
 
       case "ia_sistema":
         const dados = ["grupo", "status"];
