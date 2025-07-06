@@ -6,7 +6,7 @@ function menu(prefix, modo) {
 📋 ${prefix}tarefas – Ver lista de tarefas
 🎵 ${prefix}musica – Tocar música ambiente corporativa
 ✅ ${prefix}feito ID – Marcar tarefa como concluída
-
+👤 *Criador:* ${prefix}criado
 `;
 
     case "escolar":
@@ -33,6 +33,7 @@ function menu(prefix, modo) {
 ├─ 🎵 *Tocar música de estudo (Spotify):* ${prefix}play-spoti
 ├─ 🎧 *Play YouTube:* ${prefix}play nome-da-música *(temporariamente inativo)*
 ├─ 🤖 *Pergunte à IA:* ${prefix}chat sua pergunta *(temporariamente inativo)*
+├─ 👤 *Criador:* ${prefix}criador
 
 ╰━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╯
 
@@ -50,6 +51,10 @@ function menu(prefix, modo) {
 📝 ${prefix}tarefas – Ver tarefas compartilhadas
 🎶 ${prefix}musica – Tocar playlist para relaxar e curtir
 ✅ ${prefix}feito ID – Marcar tarefa como feita
+🖼️ *Mudar foto do grupo:* ${prefix}fotogp
+Fazer figurinha: ${prefix}s [marque a imagem] - *Faz figurinhas de imagens enviadas*
+nomear grupo: ${prefix}nomegp [novo nome] - *Muda o nome do grupo*
+👤 *Criador:* ${prefix}criado
 
 `;
 
@@ -59,7 +64,7 @@ function menu(prefix, modo) {
 📋 ${prefix}tarefas – Ver suas tarefas
 🎵 ${prefix}musica – Tocar trilha motivacional
 ✅ ${prefix}feito ID – Marcar tarefa como concluída
-
+👤 *Criador:* ${prefix}criado
 `;
 
     default:
