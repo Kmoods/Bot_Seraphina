@@ -1,13 +1,35 @@
 function menu(prefix, modo) {
   switch (modo) {
     case "empresarial":
-      return `💼 *Painel Empresarial*:
+     return `💼 *Painel Empresarial – Seraphina Bot*
 
-📋 ${prefix}tarefas – Ver lista de tarefas
-🎵 ${prefix}musica – Tocar música ambiente corporativa
-✅ ${prefix}feito ID – Marcar tarefa como concluída
-👤 *Criador:* ${prefix}criado
-`;
+🏢 *Gestão da Empresa*
+├─ 🆕 ${prefix}cadastrar-empresa [nome]
+├─ 📊 ${prefix}dashboard – Visão geral da empresa (com gráfico)
+
+📈 *Finanças*
+├─ 💰 ${prefix}receita valor / descrição
+├─ 🧾 ${prefix}despesa valor descrição
+├─ 🎯 ${prefix}meta valor – Definir meta mensal
+├─ 💸 ${prefix}venda preduto quantidade
+
+📦 *Controle de Estoque*
+├─ 📋 ${prefix}estoque – Ver itens no estoque
+└─ ➕ ${prefix}add-estoque nome quantidade precoVenda precoCompra – Adicionar produto ao estoque
+
+📤 *Exportações*
+├─ 📊 ${prefix}exportar-excel – Excel (.xlsx)
+└─ 🧾 ${prefix}exportar-pdf – PDF resumido
+
+🗂️ *Produtividade*
+├─ 📋 ${prefix}tarefas – Listar tarefas
+└─ ✅ ${prefix}feito ID – Marcar tarefa concluída
+
+🎵 *Ambiente*
+└─ 🎶 ${prefix}musica – Tocar música ambiente
+
+👤 *Sobre*
+└─ 👨‍💻 ${prefix}criado – Informações do criador`;
 
     case "escolar":
       return `

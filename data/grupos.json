@@ -3,16 +3,9 @@
     "id": 1,
     "grupoId": "120363404183230349@g.us",
     "nome": "Teste bot V3",
-    "modo": "escolar",
-    "dataEntrada": "05/07/2025, 23:30:35",
-    "adicionadoPor": "Kennedy"
-  },
-  {
-    "id": 2,
-    "grupoId": "120363402338448110@g.us",
-    "nome": "Grupo teste atividades ",
-    "modo": "escolar",
-    "dataEntrada": "06/07/2025, 01:09:40",
-    "adicionadoPor": "Kennedy"
+    "modo": "empresarial",
+    "dataEntrada": "06/07/2025, 12:52:46",
+    "adicionadoPor": "Kennedy",
+    "numero": "556981134127@s.whatsapp.net"
   }
 ]

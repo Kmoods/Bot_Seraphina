@@ -9,8 +9,24 @@ const {
   proto,
   prepareWAMessageMedia,
 } = require("@whiskeysockets/baileys");
-const pino = require("pino");
 
+const {
+  criarEmpresa,
+  getEmpresa,
+  salvarDados,
+  addProdutoEstoque,
+  addFaturamento,
+  addDespesa,
+  setMetaMensal,
+  registrarVenda,
+  resumoFinanceiro,
+  exportarExcel,
+  exportarPDF,
+  gerarGraficoPizza
+} = require('./data/func/empresarial'); // ajuste o caminho conforme sua pasta
+
+
+const pino = require("pino");
 const axios = require("axios");
 const readline = require("readline");
 const motivacao = require('./motivation.js');
@@ -24,6 +40,7 @@ const { exec } = require("child_process")
 const { menu } = require("./menu");
 const fetch = (...args) => import('node-fetch').then(({ default: fetch }) => fetch(...args));
 const { error } = require("console");
+const { text } = require("stream/consumers");
 const prefixo = "!";
 
 const rl = readline.createInterface({
@@ -36,6 +53,20 @@ const question = (text) => new Promise((resolve) => rl.question(text, resolve));
 const dataAtual = new Date().toLocaleDateString("pt-BR");
 const timeManaus = () =>
   new Date().toLocaleString("pt-BR", { timeZone: "America/Manaus" });
+
+const CAMINHO_STATUS = './data/status.json';
+
+function lerStatusAtualizacao() {
+  try {
+    return JSON.parse(fs.readFileSync(CAMINHO_STATUS));
+  } catch {
+    return { emAtualizacao: false, versao: "3.0.0", data: null };
+  }
+}
+
+function salvarStatusAtualizacao(obj) {
+  fs.writeFileSync(CAMINHO_STATUS, JSON.stringify(obj, null, 2));
+}
 
 // Variável global para modo restrito
 global.somenteAdmEscola = false;
@@ -78,7 +109,7 @@ function getModoGrupoJson(grupoId, callback) {
   callback(grupo ? grupo.modo : null);
 }
 
-function setModoGrupoJson(grupoId, nomeGrupo, modo, callback, quemAdicionou = null) {
+function setModoGrupoJson(grupoId, nomeGrupo, modo, callback, quemAdicionou = null, numero) {
   let grupos = lerJSON("./data/grupos.json");
   let existente = grupos.find(g => g.grupoId === grupoId);
 
@@ -92,7 +123,8 @@ function setModoGrupoJson(grupoId, nomeGrupo, modo, callback, quemAdicionou = nu
       nome: nomeGrupo,
       modo,
       dataEntrada: new Date().toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' }),
-      adicionadoPor: quemAdicionou || "Desconhecido"
+      adicionadoPor: quemAdicionou || "Desconhecido",
+      numero: numero || null
     });
   }
 
@@ -339,6 +371,7 @@ async function startBot() {
   });
 
   client.ev.on("messages.upsert", async (m) => {
+    //====================Const's e let's======================\\
     if (!state.creds.me) return;
     const info = m.messages && m.messages[0];
     if (!info || !info.message || info.key.fromMe) return;
@@ -361,6 +394,23 @@ async function startBot() {
     type_message = JSON.stringify(info.message)
     const isQuotedImage = type === "extendedTextMessage" && type_message.includes("imageMessage");
     const imagem_menu = "./data/img/menu.jpg"
+    let grupos = lerJSON('./data/grupos.json');
+    const status = lerStatusAtualizacao();
+    //===================Funções e If's=========================\\
+    const { emAtualizacao } = lerStatusAtualizacao?.() || {};
+
+    if (emAtualizacao && !isdono(sender)) {
+      return client.sendMessage(from, {
+        text: `⚙️ *Bot em manutenção temporária!*\n\nEstamos realizando melhorias para melhorar sua experiência. Por favor, aguarde até que o serviço seja restaurado.`
+      }, { quoted: info });
+    }
+
+    function isdono(sender) {
+      const donos = ['556981134127@s.whatsapp.net'];
+      return donos.includes(sender);
+    }
+
+
     const mandar = (conteudo) => {
       const fraseAleatoria = motivacao.getRandomMotivation(); // chama a função
       client.sendMessage(from, {
@@ -368,6 +418,7 @@ async function startBot() {
         caption: `${conteudo}\n\n> 💭 *_${fraseAleatoria}_*`
       }, { quoted: info });
     }
+
     const mandar2 = async (conteudo) => {
       await client.sendMessage(from, { text: conteudo }, { quoted: info })
     }
@@ -382,7 +433,9 @@ async function startBot() {
         return;
       }
     }
-
+    if (status.emAtualizacao && comando !== "atualizar") {
+      return mandar2('🛠️ Bot em atualização. Por favor, aguarde o término da manutenção.');
+    }
     // Função para verificar se é ADM ou dono
     async function podeExecutarRestrito() {
       if (sender.includes("556981134127")) return true;
@@ -402,7 +455,7 @@ async function startBot() {
     }
 
 
-
+    //========================================================\\
     switch (command) {
       //Comandos de segurança
       // Ativação do modo restrito
@@ -441,13 +494,13 @@ async function startBot() {
                 client.sendMessage(from, {
                   text: `✅ Grupo cadastrado com sucesso no modo *${modosMap[modoNumero]}*!`,
                 });
-              }, quemAdicionou);
+              }, quemAdicionou, sender);
             } else {
               setModoGrupoJson(from, metadata.subject, null, (ok) => {
                 client.sendMessage(from, {
                   text: `✅ Grupo cadastrado com sucesso! Use o comando *!modo [número]* para definir o modo:\n\n1️⃣ Empresarial\n2️⃣ Escolar\n3️⃣ Facultativo\n4️⃣ Amizade\n\nPara alterar o modo do grupo a qualquer momento, use o comando *!modo [número]*.`,
                 });
-              }, quemAdicionou);
+              }, quemAdicionou, sender);
             }
           });
         });
@@ -799,6 +852,242 @@ async function startBot() {
       //Modo facultativo
 
       //Modo empresarial
+    
+// 📥 Cadastrar Empresa
+case 'cadastrar-empresa': {
+  const nomeEmpresa = args.slice(1).join(' ');
+  if (!nomeEmpresa) return mandar('❌ Informe o nome da empresa.\nExemplo: !cadastrar-empresa Loja X');
+
+  const criada = criarEmpresa(from, nomeEmpresa, sender);
+  return criada
+    ? mandar(`✅ Sua empresa *${nomeEmpresa}* foi cadastrada com sucesso!\nUse *!dashboard* para visualizar.`)
+    : mandar('⚠️ Este grupo já possui uma empresa cadastrada.');
+}
+
+// 📊 Dashboard da Empresa
+case 'dashboard': {
+  const empresa = getEmpresa(from); // Ajuste para pegar os dados certos
+  if (!empresa) return mandar('❌ Nenhuma empresa cadastrada neste grupo. Use:\n!cadastrar-empresa nome');
+
+  const receita = empresa.faturamento.reduce((t, v) => t + v.valor, 0);
+  const despesa = empresa.despesas.reduce((t, v) => t + v.valor, 0);
+  const lucro = receita - despesa;
+  const progresso = empresa.metas.mensal > 0 ? ((receita / empresa.metas.mensal) * 100).toFixed(1) : "0";
+
+  // Gere o gráfico pizza
+  if (!fs.existsSync('./temp')) fs.mkdirSync('./temp');
+  const caminhoGrafico = `./temp/grafico_pizza_${from}.png`;
+  gerarGraficoPizza(from, caminhoGrafico);
+
+  const textoResumo = `🏢 *Nome:* ${empresa.nome}\n👤 *Dono:* @${empresa.dono.split('@')[0]}\n` +
+                      `📈 *Receita:* R$ ${receita.toFixed(2)}\n` +
+                      `💸 *Despesas:* R$ ${despesa.toFixed(2)}\n` +
+                      `📊 *Lucro:* R$ ${lucro.toFixed(2)}\n` +
+                      `🎯 *Meta Mensal:* R$ ${empresa.metas.mensal.toFixed(2)}\n` +
+                      `📌 *Progresso:* ${progresso}%\n` +
+                      `📦 *Estoque:* ${empresa.estoque.length} itens`;
+
+  await client.sendMessage(from, { image: fs.readFileSync(caminhoGrafico), caption: textoResumo }, { quoted: info });
+  break;
+}
+
+
+// 💰 Receita
+case 'receita': {
+  const valor = parseFloat(args[1]);
+  const descricao = args.slice(2).join('/');
+  if (isNaN(valor) || !descricao) return mandar('❌ Use: !receita valor / descrição');
+
+  return addFaturamento(from, valor, descricao)
+    ? mandar(`✅ Receita de R$ ${valor.toFixed(2)} registrada com sucesso!`)
+    : mandar('⚠️ Nenhuma empresa encontrada neste grupo.');
+}
+
+// 🧾 Despesa
+case 'despesa': {
+  const valor = parseFloat(args[1]);
+  const descricao = args.slice(2).join('/');
+  if (isNaN(valor) || !descricao) return mandar('❌ Use: !despesa valor / descrição');
+
+  return addDespesa(from, valor, descricao)
+    ? mandar(`✅ Despesa de R$ ${valor.toFixed(2)} registrada com sucesso!`)
+    : mandar('⚠️ Nenhuma empresa encontrada neste grupo.');
+}
+
+// 🎯 Meta Mensal
+case 'meta': {
+  const valor = parseFloat(args[1]);
+  if (isNaN(valor)) return mandar('❌ Use: !meta valor');
+
+  return setMetaMensal(from, valor)
+    ? mandar(`✅ Meta mensal atualizada para R$ ${valor.toFixed(2)}`)
+    : mandar('⚠️ Nenhuma empresa encontrada neste grupo.');
+}
+
+// 📦 Visualizar Estoque
+case 'estoque': {
+  const empresa = getEmpresa(from);
+  if (!empresa) return mandar('❌ Nenhuma empresa cadastrada neste grupo.');
+  if (!empresa.estoque.length) return mandar('📦 Estoque vazio no momento.');
+
+  let lista = `📦 *Estoque Atual:*\n`;
+  empresa.estoque.forEach((item, i) => {
+    lista += `\n${i + 1}. *${item.nome}*\n  Quantidade: ${item.quantidade}\n  Preço: R$ ${item.preco.toFixed(2)}\n`;
+  });
+  mandar(lista);
+  break;
+}
+
+// ➕ Adicionar ao Estoque
+case 'add-estoque': {
+  const nome = args[1];
+  const quantidade = parseInt(args[2]);
+  const precoVenda = parseFloat(args[3]);
+  const precoCompra = parseFloat(args[4]);
+
+  if (!nome || isNaN(quantidade)) {
+    return mandar('❌ Use: !add-estoque nome quantidade [precoVenda] [precoCompra]\nEx: !add-estoque pc 4 1000 600');
+  }
+
+  const empresa = getEmpresa(from);
+  if (!empresa) return mandar('❌ Nenhuma empresa cadastrada neste grupo.');
+
+  // Verifica se o produto já existe
+  const produto = empresa.estoque.find(p => p.nome.toLowerCase() === nome.toLowerCase());
+
+  if (produto) {
+    // Atualiza apenas os dados fornecidos
+    produto.quantidade += quantidade;
+    if (!isNaN(precoVenda)) produto.precoVenda = precoVenda;
+    if (!isNaN(precoCompra)) produto.precoCompra = precoCompra;
+
+    salvarDados(from, empresa);
+    return mandar(`🔄 Produto *${nome}* atualizado com sucesso.\nQuantidade atual: ${produto.quantidade}`);
+  } else {
+    // Produto novo
+    empresa.estoque.push({
+      nome,
+      quantidade,
+      precoVenda: !isNaN(precoVenda) ? precoVenda : 0,
+      precoCompra: !isNaN(precoCompra) ? precoCompra : 0
+    });
+
+    salvarDados(from, empresa);
+    return mandar(`✅ Produto *${nome}* adicionado ao estoque.`);
+  }
+}
+
+
+
+// 📄 Relatório Diário
+case 'relatorio': {
+  const empresa = getEmpresa(from);
+  if (!empresa) return mandar('❌ Nenhuma empresa cadastrada neste grupo.');
+
+  const hoje = new Date().toLocaleDateString("pt-BR");
+  const receita = empresa.faturamento.reduce((a, b) => a + b.valor, 0);
+  const despesa = empresa.despesas.reduce((a, b) => a + b.valor, 0);
+  const lucro = receita - despesa;
+
+  const relatorio = `📄 *Relatório - ${hoje}*\n\n` +
+                    `🏢 *Empresa:* ${empresa.nome}\n` +
+                    `👤 *Dono:* @${empresa.dono.split('@')[0]}\n\n` +
+                    `📈 Receita: R$ ${receita.toFixed(2)}\n` +
+                    `💸 Despesas: R$ ${despesa.toFixed(2)}\n` +
+                    `📊 Lucro: R$ ${lucro.toFixed(2)}`;
+
+  client.sendMessage(from, { text: relatorio, mentions: [empresa.dono] }, { quoted: info });
+  break;
+}
+
+// 💸 Registrar Venda
+case 'venda': {
+  const nomeProduto = args[1];
+  const quantidade = parseInt(args[2]);
+
+  if (!nomeProduto || isNaN(quantidade) || quantidade <= 0) {
+    return mandar('❌ Use: !venda nome_do_produto quantidade\nEx: !venda pc 2');
+  }
+
+  const empresa = getEmpresa(from);
+  if (!empresa) return mandar('❌ Nenhuma empresa encontrada neste grupo.');
+
+  const produto = empresa.estoque.find(p => p.nome.toLowerCase() === nomeProduto.toLowerCase());
+  if (!produto) return mandar('❌ Produto não encontrado no estoque.');
+
+  if (produto.quantidade < quantidade) {
+    return mandar(`❌ Estoque insuficiente. Você tem apenas ${produto.quantidade} unidades de ${produto.nome}.`);
+  }
+
+  const receita = produto.preco * quantidade;
+  const custo = produto.precoCompra * quantidade;
+  const lucro = receita - custo;
+
+  produto.quantidade -= quantidade;
+
+  empresa.faturamento.push({
+    id: empresa.faturamento.length + 1,
+    valor: receita,
+    descricao: `Venda de ${quantidade}x ${produto.nome}`,
+    data: new Date().toLocaleDateString("pt-BR")
+  });
+
+  empresa.despesas.push({
+    id: empresa.despesas.length + 1,
+    valor: custo,
+    descricao: `Custo da venda de ${quantidade}x ${produto.nome}`,
+    data: new Date().toLocaleDateString("pt-BR")
+  });
+
+  salvarDados(from, empresa);
+
+  mandar(
+  `✅ Venda registrada com sucesso!\n` +
+  `📦 Produto: ${produto.nome}\n` +
+  `🔢 Quantidade: ${quantidade}\n` +
+  `💰 Receita: R$ ${receita.toFixed(2)}\n` +
+  `💸 Custo: R$ ${custo.toFixed(2)}\n` +
+  `📊 Lucro: R$ ${lucro.toFixed(2)}\n` +
+  `🗓️ Data: ${new Date().toLocaleDateString("pt-BR")}`
+);
+
+  break;
+}
+
+// 📊 Exportar Excel
+case 'exportar-excel': {
+  const caminho = `./data/func/empresa/export_${from}_dados.xlsx`;
+  await exportarExcel(from, caminho);
+
+  await client.sendMessage(from, {
+    document: fs.readFileSync(caminho),
+    fileName: `relatorio_${from}.xlsx`,
+    mimetype: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    caption: '📊 Relatório financeiro exportado para Excel.'
+  }, { quoted: info });
+  break;
+}
+
+// 🧾 Exportar PDF
+case 'exportar-pdf': {
+  const caminho = `./data/func/empresa/export_${from}_relatorio.pdf`;
+
+  try {
+    await exportarPDF(from, caminho); // agora é async
+    await client.sendMessage(from, {
+      document: fs.readFileSync(caminho),
+      fileName: `relatorio_${from}.pdf`,
+      mimetype: 'application/pdf',
+      caption: '🧾 Resumo financeiro exportado em PDF.'
+    }, { quoted: info });
+  } catch (err) {
+    console.error(err);
+    mandar('❌ Erro ao gerar o PDF.');
+  }
+
+  break;
+}
+
 
       //Modo amizade
 
@@ -1033,23 +1322,23 @@ Agradeço por confiar em mim para cuidar do seu grupo. Até logo, e um abraço d
         const gruposLista = lerJSON("./data/grupos.json");
         if (gruposLista.length === 0) return mandar2("❌ Nenhum grupo cadastrado ainda.");
 
-        let texto = `📋 Lista de grupos cadastrados:\n\n`;
+        let texto_grupo = `📋 Lista de grupos cadastrados:\n\n`;
         for (const grupo of gruposLista) {
-          texto += `#️⃣ *${grupo.id}*\n`;
-          texto += `🆔 *${grupo.grupoId}*\n`;
-          texto += `📛 *Nome:* ${grupo.nome}\n`;
-          texto += `👤 *Adicionado por:* ${grupo.adicionadoPor}\n`;
-          texto += `📅 *Entrei em:* ${grupo.dataEntrada}\n\n`;
+          texto_grupo += `#️⃣ *${grupo.id}*\n`;
+          texto_grupo += `🆔 *${grupo.grupoId}*\n`;
+          texto_grupo += `📛 *Nome:* ${grupo.nome}\n`;
+          texto_grupo += `👤 *Adicionado por:* ${grupo.adicionadoPor}\n`;
+          texto_grupo += `📅 *Entrei em:* ${grupo.dataEntrada}\n\n`;
         }
 
-        client.sendMessage(from, { text: texto }, { quoted: info });
+        client.sendMessage(from, { text: texto_grupo }, { quoted: info });
         break;
 
 
       case 'rmgp':
         if (!q || isNaN(q)) return mandar2(`❌ Informe o número do grupo na lista. Ex: *${p}removergrupo 2*`);
 
-        let grupos = lerJSON('./data/grupos.json');
+
         const index = parseInt(q) - 1;
 
         if (index < 0 || index >= grupos.length) {
@@ -1120,6 +1409,64 @@ Agradeço por confiar em mim para cuidar do seu grupo. Até logo, e um abraço d
           }
         });
         break;
+
+     case 'atualizar':
+  if (!isdono(sender)) return mandar2('❌ Apenas o dono do bot pode usar este comando.');
+
+  const acao = args[1];
+  const textoCompleto = args.slice(2).join(" ");
+  const contatos = [...new Set(grupos.map(g => g.numero))];
+
+  if (acao === 'on') {
+    const dataInicio = new Date().toISOString().split('T')[0];
+
+    salvarStatusAtualizacao({
+      emAtualizacao: true,
+      versao: lerStatusAtualizacao().versao,
+      data: dataInicio
+    });
+
+    for (const numero of contatos) {
+      await client.sendMessage(numero, {
+        text: `⚙️ *Bot em Atualização*\n📅 *Início:* ${dataInicio}\nO sistema está passando por melhorias.\nPor favor, aguarde até que o processo seja concluído.`
+      });
+    }
+
+    return mandar2('✅ Modo de atualização ativado e aviso enviado aos donos dos grupos.');
+  }
+
+  if (acao === 'off') {
+    if (!textoCompleto) return mandar2('❗ Exemplo: !atualizar off versão 301 melhorias e correções...');
+
+    const versaoRegex = /(vers[aã]o[:\s]*|v)(\d{1,4}(\.\d+){0,2})/i;
+    const match = textoCompleto.match(versaoRegex);
+
+    let versaoFinal = '1.0.0';
+    if (match) {
+      const raw = match[2];
+      versaoFinal = raw.includes('.') ? raw : `${raw[0] || '0'}.${raw[1] || '0'}.${raw.slice(2) || '0'}`;
+    }
+
+    const textoSemVersao = textoCompleto.replace(versaoRegex, '').trim();
+    const dataAtual = new Date().toISOString().split('T')[0];
+
+    salvarStatusAtualizacao({
+      emAtualizacao: false,
+      versao: versaoFinal,
+      data: dataAtual
+    });
+
+    const mensagemFinal = `✅ *Atualização Finalizada!*\n\n🆕 *Versão:* ${versaoFinal}\n📅 *Data:* ${dataAtual}\n\n📋 *Novidades:*\n${textoSemVersao}\n\n🤝 Obrigado por utilizar o Seraphina!\nEquipe Kmods 💙`;
+
+    for (const numero of contatos) {
+      await client.sendMessage(numero, { text: mensagemFinal });
+    }
+
+    return mandar2('✅ Atualização encerrada e informações enviadas aos donos dos grupos.');
+  }
+
+  return mandar2('❗ Use:\n!atualizar on – ativar manutenção\n!atualizar off <mensagem> – finalizar manutenção e notificar');
+
       //================================================================\\
 
       //Area reservada

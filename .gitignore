@@ -3,4 +3,10 @@ node_modules
 .env
 conexao
 data/*.json
-
+data/func/empresa/*.json
+data/func/empresa/*.pdf
+data/func/empresa/*.xlsx
+data/func/images/*.png
+data/func/images/*.jpg
+data/func/images/*.jpeg
+data/func/backup/*.json
