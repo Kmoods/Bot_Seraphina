@@ -18,8 +18,8 @@ function menu(prefix, modo) {
 └─ ➕ ${prefix}add-estoque nome quantidade precoVenda precoCompra – Adicionar produto ao estoque
 
 📤 *Exportações*
-├─ 📊 ${prefix}exportar-excel – Excel (.xlsx)
-└─ 🧾 ${prefix}exportar-pdf – PDF resumido
+├─ 📊 ${prefix}excel – Excel (.xlsx)
+└─ 🧾 ${prefix}pdf – PDF resumido
 
 🗂️ *Produtividade*
 ├─ 📋 ${prefix}tarefas – Listar tarefas

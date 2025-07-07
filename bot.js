@@ -1055,7 +1055,7 @@ case 'venda': {
 }
 
 // 📊 Exportar Excel
-case 'exportar-excel': {
+case 'excel': {
   const caminho = `./data/func/empresa/export_${from}_dados.xlsx`;
   await exportarExcel(from, caminho);
 
@@ -1069,7 +1069,7 @@ case 'exportar-excel': {
 }
 
 // 🧾 Exportar PDF
-case 'exportar-pdf': {
+case 'pdf': {
   const caminho = `./data/func/empresa/export_${from}_relatorio.pdf`;
 
   try {
@@ -1289,7 +1289,7 @@ case 'exportar-pdf': {
 👤 *Nome:* ＫＭＯＤＳ 💭
 
 🧸 *Informações:*  
-Olá, querido(a) usuário(a)! Me chamo *Kmods* (Kennedy), sou desenvolvedor fullstack com foco atual em bots. Estou na área há mais de 1 ano, tenho 18 anos e sou apaixonado por cachorros e gatos 🐶🐱.
+Olá, querido(a) usuário(a)! Me chamo *Kmods* (Kennedy), sou desenvolvedor fullstack com foco atual em bots. Estou na área há mais de 1 ano, tenho 17 anos e sou apaixonado por cachorros e gatos 🐶🐱.
 Agradeço por confiar em mim para cuidar do seu grupo. Até logo, e um abraço do Kmods! 🫂
 
 🌐 *Função:* Desenvolvedor de bots e Desenvolvedor web.
