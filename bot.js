@@ -388,7 +388,7 @@ async function startBot() {
     const sender = info.key.participant || info.key.remoteJid;
     const modoNumero = args[1];
     const modosMap = { 1: "empresarial", 2: "escolar", 3: "facultativo", 4: "amizade" };
-    const Random = Math.random(10)
+    const Random = Math.random(10);
     const altpdf = Object.keys(info.message)
     const type = altpdf[0] == 'senderKeyDistributionMessage' ? altpdf[1] == 'messageContextInfo' ? altpdf[2] : altpdf[1] : altpdf[0]
     type_message = JSON.stringify(info.message)
@@ -409,7 +409,6 @@ async function startBot() {
       const donos = ['556981134127@s.whatsapp.net'];
       return donos.includes(sender);
     }
-
 
     const mandar = (conteudo) => {
       const fraseAleatoria = motivacao.getRandomMotivation(); // chama a função
